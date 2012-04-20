@@ -4,9 +4,9 @@
 extern const char * terminal_name[];
 
 extern const char * type_name[];
-enum type_name_enum{
-int_type_name=0,
-float_type_name} ;
+enum type_enum{
+int_type=0,
+float_type} ;
 
 extern const char * nonterminal_name[] ;
 enum nonterminal_name_enum{

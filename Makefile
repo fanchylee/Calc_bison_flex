@@ -6,7 +6,7 @@ rm_flags=-f
 FSRC=calc.l 
 BSRC=calc.y
 CSRC=calc.lex.c calc.yy.c 
-EXCSRC=const.c global.c
+EXCSRC=const.c global.c type.c
 TARGET = calc
 
 LEX=flex

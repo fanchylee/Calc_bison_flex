@@ -1,6 +1,7 @@
 #ifndef __STRUCT_H__
 #define __STRUCT_H__
 
+#include "const.h"
 
 union myvalue{
 	int type_int;

@@ -7,11 +7,11 @@
 
 #include <signal.h>
 
-#include "type.h"
 #include "struct.h"
 #include "relop.h"
 #include "global.h"
 #include "const.h"
+#include "type.h"
 
 extern int num_lines;
 extern int yylineno;
@@ -233,12 +233,27 @@ int traverse_node_tree(NODE* head ){
 	printf(tab);
 	if(head->name == terminal_name[ID-WHILE]){
 		printf("%s:%s\n",head->name , ((IDTEM*)(head->value).type_p)->name);
+		if(head->parent->name == nonterminal_name[FunDec]){
+			
+		}else if(head->parent->name == nonterminal_name[VarDec]){
+		}else if(head->parent->name == nonterminal_name[Tag]){
+		}else if(head->parent->name == nonterminal_name[OptTag]){
+		}else{
+		}
 	}else if(head->name == terminal_name[TYPE-WHILE]){
-		printf("%s:%s\n",head->name,(char *)(head->value).type_p) ;
+		printf("%s: %s\n",head->name,(char *)(head->value).type_p) ;
+		if(strcmp((char*)(head->value).type_p,"int")){
+			((head->parent->next_sister->child_head)->value).type_p = basic_create_type(int_type);
+		}else if(strcmp((char*)(head->value).type_p,"float")){
+			(head->value).type_p = basic_create_type(float_type);
+		}else{
+			perror("calc.y:249,error");
+			exit(EXIT_FAILURE);
+		}
 	}else if(head->name == terminal_name[FLOAT-WHILE]){
-		printf("%s:%f\n",head->name,(head->value).type_float) ;
-	}else if(head->name == terminal_name[INT- WHILE]){
-		printf("%s:%d\n",head->name,(head->value).type_int);
+		printf("%s: %f\n",head->name,(head->value).type_float) ;
+	}else if(head->name == terminal_name[INT-WHILE]){
+		printf("%s: %d\n",head->name,(head->value).type_int);
 	}else{
 		printf("%s (%d)\n",head->name,head->line);
 	}

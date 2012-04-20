@@ -56,9 +56,9 @@ else		{
 		}
 {type}		{
 			if(strcmp(yytext,"int") == 0)
-				yylval = value_create_node(ptou((void *)type_name[int_type_name]),yylineno,terminal_name[TYPE        -WHILE]) ;
+				yylval = value_create_node(ptou((void *)type_name[int_type]),yylineno,terminal_name[TYPE        -WHILE]) ;
 			if(strcmp(yytext,"float") == 0)
-				yylval = value_create_node(ptou((void *)terminal_name[float_type_name]),yylineno,terminal_name[TYPE        -WHILE]) ;
+				yylval = value_create_node(ptou((void *)terminal_name[float_type]),yylineno,terminal_name[TYPE        -WHILE]) ;
 			return(TYPE        );
 		}
 {id}		{
