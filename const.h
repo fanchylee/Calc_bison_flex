@@ -9,7 +9,7 @@ int_type=0,
 float_type} ;
 
 extern const char * nonterminal_name[] ;
-enum nonterminal_name_enum{
+enum nonterminal_enum{
 Program = 0,
 ExtDefList,
 ExtDef,

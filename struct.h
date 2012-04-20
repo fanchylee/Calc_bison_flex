@@ -2,6 +2,7 @@
 #define __STRUCT_H__
 
 #include "const.h"
+#include "type.h"
 
 union myvalue{
 	int type_int;
@@ -10,6 +11,7 @@ union myvalue{
 	void * type_p ;
 };
 typedef union myvalue MYVALUE ;
+
 struct node{
 	struct node * parent ;
 	struct node * child_head  ;
@@ -20,12 +22,16 @@ struct node{
 	long int line ;
 };
 typedef struct node NODE ;
+
 struct id_item{
-	char *name ;
+	char* name ;
+	enum kind_ {Variable=0 , Structure, Function, StructionField } kind ;
+	Type* type ;
 	struct id_item * next ;
 	struct id_item * previous ;
 };
 typedef struct id_item IDTEM ;
+
 extern NODE* create_node() ;
 extern NODE* value_create_node(MYVALUE value,int line,const  char * name);
 

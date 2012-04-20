@@ -1,10 +1,12 @@
 #ifndef __TYPE_H__
-#define __YYPE_H__
+#define __TYPE_H__
 
 #define YYSTYPE NODE*
 #include "const.h"
+
 typedef struct Type_ Type;
 typedef struct FieldList_ FieldList;
+
 struct Type_
 {
     enum { basic, array, structure } kind;

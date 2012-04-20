@@ -1,17 +1,16 @@
 %{
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 
-#include <signal.h>
 
 #include "struct.h"
 #include "relop.h"
 #include "global.h"
 #include "const.h"
 #include "type.h"
+#include "analyze.h"
 
 extern int num_lines;
 extern int yylineno;
@@ -52,30 +51,29 @@ Program:	ExtDefList			{
 							YYACCEPT;
 						}
 ;                                                                                                
-ExtDefList:	  /*empty*/ 			{$$=empty_node(nonterminal_name[ExtDefList]) ;			}
-		| ExtDef ExtDefList		{$$=csp_node(nonterminal_name[ExtDefList],$1,$2,NULL);		}
+ExtDefList:	  /*empty*/ 			{$$=empty_node(nonterminal_name[ExtDefList]) ;				}
+		| ExtDef ExtDefList		{$$=csp_node(nonterminal_name[ExtDefList],$1,$2,NULL);			}
 ;                                                                                                
-ExtDef:		  Specifier ExtDecList SEMI	{$$=csp_node(nonterminal_name[ExtDef],$1,$2,$3,NULL);		}
-		| Specifier SEMI		{$$=csp_node(nonterminal_name[ExtDef],$1,$2,NULL);		}	
-		| Specifier FunDec CompSt	{$$=csp_node(nonterminal_name[ExtDef],$1,$2,$3,NULL);		}
-		| Specifier error		{yyerror(": Expected \";\"\n");yyerrok;		}
-		| error SEMI			{yyerror(": error in Specifier\n");yyerrok;	}
-		| Specifier ExtDecList error	{yyerror(": Expected \";\"\n");yyerrok;		}
+ExtDef:		  Specifier ExtDecList SEMI	{$$=csp_node(nonterminal_name[ExtDef],$1,$2,$3,NULL);			}
+		| Specifier SEMI		{$$=csp_node(nonterminal_name[ExtDef],$1,$2,NULL);			}	
+		| Specifier FunDec CompSt	{$$=csp_node(nonterminal_name[ExtDef],$1,$2,$3,NULL);			}
+		| Specifier error		{yyerror(": Expected \";\"\n");yyerrok;					}
+		| error SEMI			{yyerror(": error in Specifier\n");yyerrok;				}
+		| Specifier ExtDecList error	{yyerror(": Expected \";\"\n");yyerrok;					}
 ;                                                                                                
-ExtDecList:	  VarDec			{$$=csp_node(nonterminal_name[ExtDecList],$1,NULL);		}
-		| VarDec COMMA ExtDecList 	{$$=csp_node(nonterminal_name[ExtDecList],$1,$2,$3,NULL);	}
+ExtDecList:	  VarDec			{$$=csp_node(nonterminal_name[ExtDecList],$1,NULL);			}
+		| VarDec COMMA ExtDecList 	{$$=csp_node(nonterminal_name[ExtDecList],$1,$2,$3,NULL);		}
 ;                                                                                                
-                                                                                                 
 Specifier:	  TYPE				{$$=csp_node(nonterminal_name[Specifier],$1,NULL);			}	
 		| StructSpecifier		{$$=csp_node(nonterminal_name[Specifier],$1,NULL);			}
 ;                                                                                                
 StructSpecifier:  STRUCT OptTag LC DefList RC	{$$=csp_node(nonterminal_name[StructSpecifier],$1,$2,$3,$4,$5,NULL);	}
 		| STRUCT Tag			{$$=csp_node(nonterminal_name[StructSpecifier],$1,$2,NULL);		}
-		| STRUCT error			{yyerror(": error in struct specifier\n");yyerrok;	}
-		| STRUCT OptTag LC DefList error{yyerror(": Expected \"}\"\n");yyerrok;		}	
+		| STRUCT error			{yyerror(": error in struct specifier\n");yyerrok;			}
+		| STRUCT OptTag LC DefList error{yyerror(": Expected \"}\"\n");yyerrok;					}	
 		
 ;                                                                                                
-OptTag:	  /*empty*/                             {$$=empty_node(nonterminal_name[OptTag]) ;			}                                                
+OptTag:	  /*empty*/                             {$$=empty_node(nonterminal_name[OptTag]) ;			}
 		| ID				{$$=csp_node(nonterminal_name[OptTag],$1,NULL);			}
 ;
 Tag:	  	  ID				{$$=csp_node(nonterminal_name[Tag],$1,NULL);			}
@@ -83,12 +81,12 @@ Tag:	  	  ID				{$$=csp_node(nonterminal_name[Tag],$1,NULL);			}
  
 VarDec:		  ID				{$$=csp_node(nonterminal_name[VarDec],$1,NULL);			}
 		| VarDec LB INT RB		{$$=csp_node(nonterminal_name[VarDec],$1,$2,$3,$4,NULL);	}
-		| VarDec LB INT error		{yyerror(": Expected \"]\"\n");yyerrok;		}
+		| VarDec LB INT error		{yyerror(": Expected \"]\"\n");yyerrok;				}
 ;
-FunDec:		  ID LP VarList RP		{$$=csp_node(nonterminal_name[FunDec],$1,$2,$3,$4,NULL);	}	
+FunDec:		  ID LP VarList RP		{$$=csp_node(nonterminal_name[FunDec],$1,$2,$3,$4,NULL);	}
 		| ID LP RP			{$$=csp_node(nonterminal_name[FunDec],$1,$2,$3,NULL);		}
-		| ID LP VarList error		{yyerror(": Expected \")\" \n");yyerrok;	}
-		| ID LP error			{yyerror(": Expected \")\" \n");yyerrok;	}
+		| ID LP VarList error		{yyerror(": Expected \")\" \n");yyerrok;			}
+		| ID LP error			{yyerror(": Expected \")\" \n");yyerrok;			}
 ;
 VarList:	  ParamDec COMMA VarList	{$$=csp_node(nonterminal_name[VarList],$1,$2,$3,NULL);		}
 		| ParamDec			{$$=csp_node(nonterminal_name[VarList],$1,NULL);		}
@@ -121,7 +119,7 @@ DefList:  /* empty*/				{$$=empty_node(nonterminal_name[DefList]) ;			}
 		| Def DefList			{$$=csp_node(nonterminal_name[DefList],$1,$2,NULL);		}
 ;
 Def:		  Specifier DecList SEMI	{$$=csp_node(nonterminal_name[Def],$1,$2,$3,NULL);		}
-		| Specifier DecList error	{yyerror(": Expected \"; 1\"\n");yyerrok;	}
+		| Specifier DecList error	{yyerror(": Expected \"; 1\"\n");yyerrok;			}
 ;                                                                                                
 DecList:	  Dec				{$$=csp_node(nonterminal_name[DecList],$1,NULL);		}
 		| Dec COMMA DecList		{$$=csp_node(nonterminal_name[DecList],$1,$2,$3,NULL);		}
@@ -230,33 +228,8 @@ NODE * empty_node(const char * name ) {
 int traverse_node_tree(NODE* head ){
 	char * temp;
 	if(head->line==0)goto recursive;
-	printf(tab);
-	if(head->name == terminal_name[ID-WHILE]){
-		printf("%s:%s\n",head->name , ((IDTEM*)(head->value).type_p)->name);
-		if(head->parent->name == nonterminal_name[FunDec]){
-			
-		}else if(head->parent->name == nonterminal_name[VarDec]){
-		}else if(head->parent->name == nonterminal_name[Tag]){
-		}else if(head->parent->name == nonterminal_name[OptTag]){
-		}else{
-		}
-	}else if(head->name == terminal_name[TYPE-WHILE]){
-		printf("%s: %s\n",head->name,(char *)(head->value).type_p) ;
-		if(strcmp((char*)(head->value).type_p,"int")){
-			((head->parent->next_sister->child_head)->value).type_p = basic_create_type(int_type);
-		}else if(strcmp((char*)(head->value).type_p,"float")){
-			(head->value).type_p = basic_create_type(float_type);
-		}else{
-			perror("calc.y:249,error");
-			exit(EXIT_FAILURE);
-		}
-	}else if(head->name == terminal_name[FLOAT-WHILE]){
-		printf("%s: %f\n",head->name,(head->value).type_float) ;
-	}else if(head->name == terminal_name[INT-WHILE]){
-		printf("%s: %d\n",head->name,(head->value).type_int);
-	}else{
-		printf("%s (%d)\n",head->name,head->line);
-	}
+	fputs(tab,stdout);
+	analyze(head);
 recursive:
 	if(head->child_head != NULL){
 		tab = realloc(tab,strlen(tab)+3);
@@ -297,7 +270,7 @@ void yyerror(char* msg)
 	if(strcmp(msg,"syntax error") == 0)
 		fprintf(stderr,"Error Type 2 at line: %d: %s",yylineno,msg);
 	else 
-		fprintf(stderr,msg);
+		fputs(msg,stderr);
 }
 int relop_switch(arg1,arg2,arg3){
 	switch(arg2)
@@ -319,3 +292,4 @@ int relop_switch(arg1,arg2,arg3){
 	return -1;
 	}	
 }
+

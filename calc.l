@@ -58,7 +58,7 @@ else		{
 			if(strcmp(yytext,"int") == 0)
 				yylval = value_create_node(ptou((void *)type_name[int_type]),yylineno,terminal_name[TYPE        -WHILE]) ;
 			if(strcmp(yytext,"float") == 0)
-				yylval = value_create_node(ptou((void *)terminal_name[float_type]),yylineno,terminal_name[TYPE        -WHILE]) ;
+				yylval = value_create_node(ptou((void *)type_name[float_type]),yylineno,terminal_name[TYPE        -WHILE]) ;
 			return(TYPE        );
 		}
 {id}		{
@@ -243,8 +243,8 @@ int traverse_item_list( IDTEM*  head){
 	IDTEM* item = NULL ;
 	item = head->next  ;
 	while(item != NULL){
-		printf(item->name);
-		putchar('\n');
+		fputs(item->name,stdout);
+		fputc('\n',stdout);
 		item= item->next ;
 	}
 	return  0 ;
