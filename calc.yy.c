@@ -2331,6 +2331,7 @@ NODE * csp_node(const char * name ,NODE * ch , ...) {
 	while((temp->next_sister = (NODE*)va_arg(ap , NODE *))!= NULL){
 		temp->next_sister->previous_sister = temp ;
 		temp = temp->next_sister ;
+		cp_link(name,temp);
 	}
 	va_end(ap);
 	return p ;
@@ -2409,5 +2410,4 @@ int relop_switch(arg1,arg2,arg3){
 	return -1;
 	}	
 }
-
 

@@ -3,6 +3,10 @@
 
 #define YYSTYPE NODE*
 #include "const.h"
+#define BASIC_TYPE 0
+#define ARRAY_TYPE 1
+#define STRUCTURE_TYPE 2
+
 
 typedef struct Type_ Type;
 typedef struct FieldList_ FieldList;
@@ -23,10 +27,11 @@ struct Type_
 struct FieldList_
 {
     char* name;           // field name
-    Type type;            // field type 
+    Type* type;            // field type 
     FieldList* tail;       // next field
 };
 
 extern Type* create_type();
 extern Type* basic_create_type(enum type_enum t);
+extern Type* create_type_kind(int type_kind,...);
 #endif
