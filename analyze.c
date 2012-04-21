@@ -4,10 +4,14 @@
 #include "struct.h"
 #include "const.h"
 #include "calc.yy.h"
+#include "global.h"
 
 static int analyze_def(NODE* head, enum nonterminal_enum tp);
 static int warning(const char * information, long int line ) ;
 static int analyze_funvar(NODE* head);
+static int analyze_extdeclist(NODE* head);
+static int analyze_vardec(NODE* head);
+static void allowoverlap(IDTEM * head);
 
 int analyze(NODE* head){
 	const char * ctemp ;
@@ -26,9 +30,18 @@ int analyze(NODE* head){
 	}else if(ctemp == nonterminal_name[Def]){
 		printf("%s (%ld)\n",head->name,head->line);
 		analyze_def(head,Def);
+	}else if(ctemp == nonterminal_name[ExtDecList]){
+		printf("%s (%ld)\n",head->name,head->line);
+		analyze_extdeclist(head);
 	}else if(ctemp == nonterminal_name[VarList]){
 		printf("%s (%ld)\n",head->name,head->line);
 		analyze_funvar(head);
+	}else if(ctemp == nonterminal_name[VarDec]){
+		printf("%s (%ld)\n",head->name,head->line);
+		analyze_vardec(head);
+	}else if(ctemp == nonterminal_name[ParamDec]){
+		printf("%s (%ld)\n",head->name,head->line);
+		analyze_def(head,ParamDec);
 	}else{
 		printf("%s (%ld)\n",head->name,head->line);
 	}
@@ -39,9 +52,11 @@ static int analyze_def(NODE* head, enum nonterminal_enum tp){
 	if((ctemp = head->child_head->child_head->name) == terminal_name[TYPE - WHILE] ){
 		NODE* temp = head->child_head->child_head ;
 		if((temp->value).type_p == type_name[int_type]){
+			temp->parent->parent->attr =
 			temp->parent->attr = 
 			temp->attr = create_type_kind(BASIC_TYPE,int_type);
 		}else if((temp->value).type_p == type_name[float_type]){
+			temp->parent->parent->attr =
 			temp->parent->attr = 
 			temp->attr = create_type_kind(BASIC_TYPE,float_type);
 		}else{
@@ -58,7 +73,10 @@ static int analyze_def(NODE* head, enum nonterminal_enum tp){
 			temp->attr = temp->previous_sister->attr ;
 			(tid = temp->child_head->value.type_p)->kind = FUNCTION_KIND ;
 			tid->u.funtype.ret = temp->attr ;
+			tid->overlap = DISALLOW ;
 		}else if(tp == Def && temp->name == nonterminal_name[DecList]){
+			temp->attr = temp->previous_sister->attr ;
+		}else if(tp == ParamDec && temp->name == nonterminal_name[VarDec]){
 			temp->attr = temp->previous_sister->attr ;
 		}else{
 			perror("unknown error: analyze.c:74");
@@ -99,10 +117,66 @@ static int analyze_def(NODE* head, enum nonterminal_enum tp){
 	}
 	return 0;
 }
+static int analyze_funvar(NODE* head){
+	allowoverlap(idtable_head);
+	return 0;
+}
+static int analyze_extdeclist(NODE* head){
+	head->attr = head->parent->attr ;
+	return 0 ;
+}
+static int analyze_vardec(NODE* head){
+	NODE* temp;
+	IDTEM* tid ;
+	int kind ;
+	if((temp = head->parent)->name == nonterminal_name[VarDec]){
+		int size ;
+		size = head->next_sister->next_sister->value.type_int ;
+		head->attr = create_type_kind(ARRAY_TYPE,head->parent->attr,size);
+		kind = VARIABLE_KIND;
+	}else if(temp->name == nonterminal_name[Dec]){
+		head->attr = head->parent->attr ;
+		temp = temp->parent->parent->parent ;
+		while((temp=temp->parent)->name == nonterminal_name[DefList]){}
+		if(temp->name == nonterminal_name[StructSpecifier]){
+			kind = STRUCTUREFIELD_KIND;
+		}else{
+			kind = VARIABLE_KIND;
+		}
+	}else {
+		head->attr = head->parent->attr ;
+		kind = VARIABLE_KIND ;
+	}
+	if((temp = head->child_head)->name == terminal_name[ID - WHILE]){
+		(tid = temp->value.type_p)->kind = kind ;
+		tid->overlap = DISALLOW ;
+		switch(kind){  
+			case VARIABLE_KIND:
+			tid->u.t = head->attr ;
+			break ;
+			
+			case STRUCTUREFIELD_KIND:
+			tid->u.structurefieldtype.t = head->attr ;
+			//TODO  structurefieldtype.structure
+			break ;
+
+			default:
+			perror("unknown error :unknown kind");
+			exit(EXIT_FAILURE);
+			break ;
+		}
+			
+	}
+	return 0;
+}
+static void allowoverlap(IDTEM * head){
+	if(head == NULL){return;}else{
+		allowoverlap(head->next);
+	}
+	if(head->overlap == DISALLOW){
+		head->overlap = ALLOW ;
+	}
+}
 static int warning(const char * information , long int line){
 	return fprintf(stderr, "warning at line %ld: %s\n",line , information);
-}
-static int analyze_funvar(NODE* head){
-	
-	return 0;
 }

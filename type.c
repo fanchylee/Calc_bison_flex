@@ -1,3 +1,4 @@
+
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -42,6 +43,7 @@ Type* create_type_kind(int type_kind,...){
 		case ARRAY_TYPE:
 		tp->u.array.elem = va_arg(ap,Type* );
 		tp->u.array.size = va_arg(ap,int);
+		printf("size:%d\n",tp->u.array.size );
 		break;
 
 		case STRUCTURE_TYPE:

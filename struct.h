@@ -3,10 +3,15 @@
 
 #include "const.h"
 #include "type.h"
+
 #define VARIABLE_KIND 0
 #define STRUCTURE_KIND 1
 #define FUNCTION_KIND 2
 #define STRUCTUREFIELD_KIND 3
+
+#define UNSPECIFIED 0
+#define DISALLOW 1
+#define ALLOW 2
 
 union myvalue{
 	int type_int;
@@ -37,7 +42,7 @@ struct id_item{
 		struct {Type* t;Type* structure;} structurefieldtype ;
 	}u;
 	char* name ;
-	unsigned char overlapable ;
+	unsigned char overlap ;
 	struct id_item * back ;
 	struct id_item * forward ;
 	struct id_item * next ;
