@@ -4,10 +4,10 @@
 #include "const.h"
 #include "type.h"
 
-#define VARIABLE_KIND 0
-#define STRUCTURE_KIND 1
+#define VARIABLE_KIND 1
 #define FUNCTION_KIND 2
 #define STRUCTUREFIELD_KIND 3
+#define STRUCTURE_KIND 4
 
 #define UNSPECIFIED 0
 #define DISALLOW 1
@@ -34,7 +34,7 @@ struct node{
 typedef struct node NODE ;
 
 struct id_item{
-	enum kind_ {Variable=0 , Structure, Function, StructionField } kind ;
+	enum kind_ {Variable=1 , Structure, Function, StructionField } kind ;
 	union {
 		Type* t; //for variables
 		struct {Type* ret;struct id_item * varhead;} funtype;

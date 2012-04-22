@@ -22,6 +22,10 @@ NODE *  cp_node(const char * ,NODE *  );
 NODE * cp_link(const char * ,NODE *) ;
 NODE * csp_node(const char * ,NODE * head , ...) ;
 NODE * empty_node() ;
+static int opt_tag_id(NODE* node);
+static int tag_id(NODE* node);
+//static int var_id(NODE* node);
+static int fun_var_id(NODE* node,int kind);
 static void free_list(void* head);
 static void free_tree(void* root);
 
@@ -74,17 +78,17 @@ StructSpecifier:  STRUCT OptTag LC DefList RC	{$$=csp_node(nonterminal_name[Stru
 		
 ;                                                                                                
 OptTag:	  /*empty*/                             {$$=empty_node(nonterminal_name[OptTag]) ;			}
-		| ID				{$$=csp_node(nonterminal_name[OptTag],$1,NULL);			}
+		| ID				{opt_tag_id($1);$$=csp_node(nonterminal_name[OptTag],$1,NULL);	}
 ;
-Tag:	  	  ID				{$$=csp_node(nonterminal_name[Tag],$1,NULL);			}
+Tag:	  	  ID				{tag_id($1);$$=csp_node(nonterminal_name[Tag],$1,NULL);	}
 ;
  
-VarDec:		  ID				{$$=csp_node(nonterminal_name[VarDec],$1,NULL);			}
+VarDec:		  ID				{fun_var_id($1,VARIABLE_KIND);$$=csp_node(nonterminal_name[VarDec],$1,NULL);	}
 		| VarDec LB INT RB		{$$=csp_node(nonterminal_name[VarDec],$1,$2,$3,$4,NULL);	}
 		| VarDec LB INT error		{yyerror(": Expected \"]\"\n");yyerrok;				}
 ;
-FunDec:		  ID LP VarList RP		{$$=csp_node(nonterminal_name[FunDec],$1,$2,$3,$4,NULL);	}
-		| ID LP RP			{$$=csp_node(nonterminal_name[FunDec],$1,$2,$3,NULL);		}
+FunDec:		  ID LP VarList RP		{fun_var_id($1,FUNCTION_KIND);$$=csp_node(nonterminal_name[FunDec],$1,$2,$3,$4,NULL);	}
+		| ID LP RP			{fun_var_id($1,FUNCTION_KIND);$$=csp_node(nonterminal_name[FunDec],$1,$2,$3,NULL);		}
 		| ID LP VarList error		{yyerror(": Expected \")\" \n");yyerrok;			}
 		| ID LP error			{yyerror(": Expected \")\" \n");yyerrok;			}
 ;
@@ -226,7 +230,80 @@ NODE * empty_node(const char * name ) {
 	node->name = name ;
 	return (NODE *)node ;
 }
+static int fun_var_id(NODE* node , int kind){
+	IDTEM* tid = node->value.type_p ;
+	switch(tid->kind){ 
+		IDTEM* newid ;
+		case UNSPECIFIED:
+		tid->kind = kind; 
+		break;
 
+		case STRUCTURE_KIND:
+		if((newid = malloc(sizeof(IDTEM))) != NULL){
+			memcpy(newid,tid,sizeof(IDTEM));
+			newid->kind = kind ;
+			newid->next = ((IDTEM*)(node->value.type_p))->next;
+			if(newid->next != NULL){
+				newid->next->previous = newid ;
+			}
+			newid->previous = node->value.type_p ;
+			((IDTEM*)(node->value.type_p))->next = newid ;
+			node->value.type_p = newid ;
+		}else{
+			perror("null pointer");
+			exit(EXIT_FAILURE);
+		}
+		break ;
+
+		default:
+		break;
+	}
+	return 0;
+}
+
+static int tag_id(NODE* node){
+	IDTEM* tid = node->value.type_p ;
+	if(tid->kind == STRUCTURE_KIND){
+	}else if(tid->next != NULL && tid->next->kind == STRUCTURE_KIND){
+		node->value.type_p = tid->next ;
+	}else{
+		error("undefined structure",17,node->line);
+	}
+	
+	return 0;
+}
+static int opt_tag_id(NODE* node){
+	IDTEM* tid = node->value.type_p ;
+	switch(tid->kind){ 
+		IDTEM* newid ;
+		case UNSPECIFIED:
+		tid->kind = STRUCTURE_KIND; 
+		break;
+	
+		case STRUCTURE_KIND:
+		error("structure redefined",16,node->line);
+		break;
+		
+		default:
+//		error("symbol redefined as a structure",16,node->line);
+		if((newid = malloc(sizeof(IDTEM))) != NULL){
+			memcpy(newid,tid,sizeof(IDTEM));
+			newid->kind = STRUCTURE_KIND ;
+			newid->next = ((IDTEM*)(node->value.type_p))->next;
+			if(newid->next != NULL){
+				newid->next->previous = newid ;
+			}
+			newid->previous = node->value.type_p ;
+			((IDTEM*)(node->value.type_p))->next = newid ;
+			node->value.type_p = newid ;
+		}else{
+			perror("null pointer");
+			exit(EXIT_FAILURE);
+		}
+		break ;
+	}
+	return 0;
+}
 int traverse_node_tree(NODE* head ){
 	char * temp;
 	if(head->line==0)goto recursive;

@@ -1,6 +1,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "struct.h"
 #include "const.h"
 #include "calc.yy.h"
@@ -11,6 +12,8 @@ static int warning(const char * information, long int line ) ;
 static int analyze_funvar(NODE* head);
 static int analyze_extdeclist(NODE* head);
 static int analyze_vardec(NODE* head);
+int error(const char * info , int type ,long int line) ;
+static int addvar(int kind,IDTEM* tid,NODE* head);
 static void allowoverlap(IDTEM * head);
 
 int analyze(NODE* head){
@@ -71,9 +74,15 @@ static int analyze_def(NODE* head, enum nonterminal_enum tp){
 		}else if(tp == ExtDef && temp->name == nonterminal_name[FunDec]){
 			IDTEM* tid;
 			temp->attr = temp->previous_sister->attr ;
-			(tid = temp->child_head->value.type_p)->kind = FUNCTION_KIND ;
-			tid->u.funtype.ret = temp->attr ;
-			tid->overlap = DISALLOW ;
+			tid = temp->child_head->value.type_p;
+			if(tid->overlap == DISALLOW &&
+			tid->kind != STRUCTURE_KIND){
+				error("Symbol redeclared as function",4,temp->line);
+			}else{
+				tid->kind = FUNCTION_KIND ;
+				tid->u.funtype.ret = temp->attr ;
+				tid->overlap = DISALLOW ;
+			}
 		}else if(tp == Def && temp->name == nonterminal_name[DecList]){
 			temp->attr = temp->previous_sister->attr ;
 		}else if(tp == ParamDec && temp->name == nonterminal_name[VarDec]){
@@ -148,24 +157,34 @@ static int analyze_vardec(NODE* head){
 		kind = VARIABLE_KIND ;
 	}
 	if((temp = head->child_head)->name == terminal_name[ID - WHILE]){
-		(tid = temp->value.type_p)->kind = kind ;
-		tid->overlap = DISALLOW ;
-		switch(kind){  
+		tid = temp->value.type_p;
+		addvar(kind,tid,head);
+/*
+		switch(tid->kind){
+			case STRUCTURE_KIND:
+			addvar(kind,tid,head);
+			break ;
+			
 			case VARIABLE_KIND:
-			tid->u.t = head->attr ;
-			break ;
-			
 			case STRUCTUREFIELD_KIND:
-			tid->u.structurefieldtype.t = head->attr ;
-			//TODO  structurefieldtype.structure
-			break ;
+			case FUNCTION_KIND:
+				switch(tid->overlap){
+			 	case DISALLOW :
+				error("Symbol redeclared as variable",3,temp->line);
+				break;
 
-			default:
-			perror("unknown error :unknown kind");
-			exit(EXIT_FAILURE);
-			break ;
+				case UNSPECIFIED:
+				case ALLOW:
+				addvar(kind,tid,head);
+				break;
+				
+				default:
+				perror("unknown error :unknown id kind");
+				exit(EXIT_FAILURE);
+				break;
+			}
 		}
-			
+*/
 	}
 	return 0;
 }
@@ -177,6 +196,53 @@ static void allowoverlap(IDTEM * head){
 		head->overlap = ALLOW ;
 	}
 }
+static addvar(int kind,IDTEM* tid,NODE* head){
+	if(tid->kind == STRUCTURE_KIND){
+		perror("unknown error :here cannot be structure");
+		exit(EXIT_FAILURE);
+	}
+	switch(tid->overlap){
+		IDTEM* newid ;
+		case ALLOW:
+		newid = malloc(sizeof(IDTEM));
+		tid->overlap = DISALLOW;
+		memcpy(newid,tid,sizeof(IDTEM));
+		tid->next = tid->previous = NULL;
+		tid = newid ;
+		case UNSPECIFIED:
+		tid->overlap = DISALLOW ;
+		tid->kind = kind ;
+		switch(kind){  
+			case VARIABLE_KIND:
+			tid->u.t = head->attr ;
+			break ;
+
+			case STRUCTUREFIELD_KIND:
+			tid->u.structurefieldtype.t = head->attr ;
+			//TODO  structurefieldtype.structure 
+			break ;
+
+			default:
+			perror("unknown error :unknown kind");
+			exit(EXIT_FAILURE);
+			break ;
+		}
+		break;
+		
+		
+		case DISALLOW:
+		error("Symbol redeclared as variable",3,head->child_head->line);
+		break;
+		
+		default:
+		perror("unknown error :unknown overlap state");
+		exit(EXIT_FAILURE);
+		break;
+	}
+}
 static int warning(const char * information , long int line){
 	return fprintf(stderr, "warning at line %ld: %s\n",line , information);
+}
+int error(const char * info , int type ,long int line){
+	return fprintf(stdout,"Error type %d at line %ld: %s\n",type,line,info);
 }

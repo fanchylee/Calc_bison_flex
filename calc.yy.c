@@ -93,13 +93,17 @@ NODE *  cp_node(const char * ,NODE *  );
 NODE * cp_link(const char * ,NODE *) ;
 NODE * csp_node(const char * ,NODE * head , ...) ;
 NODE * empty_node() ;
+static int opt_tag_id(NODE* node);
+static int tag_id(NODE* node);
+//static int var_id(NODE* node);
+static int fun_var_id(NODE* node,int kind);
 static void free_list(void* head);
 static void free_tree(void* root);
 
 
 
 /* Line 189 of yacc.c  */
-#line 103 "calc.yy.c"
+#line 107 "calc.yy.c"
 
 /* Enabling traces.  */
 #ifndef YYDEBUG
@@ -172,7 +176,7 @@ typedef int YYSTYPE;
 
 
 /* Line 264 of yacc.c  */
-#line 176 "calc.yy.c"
+#line 180 "calc.yy.c"
 
 #ifdef short
 # undef short
@@ -490,14 +494,14 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    48,    48,    54,    55,    57,    58,    59,    60,    61,
-      62,    64,    65,    67,    68,    70,    71,    72,    73,    76,
-      77,    79,    82,    83,    84,    86,    87,    88,    89,    91,
-      92,    94,    97,    98,   100,   101,   103,   104,   105,   106,
-     107,   108,   109,   113,   114,   115,   116,   118,   119,   121,
-     122,   124,   125,   127,   128,   131,   132,   133,   134,   135,
-     136,   137,   138,   139,   140,   141,   142,   143,   144,   145,
-     146,   147,   148,   149,   150,   155,   156
+       0,    52,    52,    58,    59,    61,    62,    63,    64,    65,
+      66,    68,    69,    71,    72,    74,    75,    76,    77,    80,
+      81,    83,    86,    87,    88,    90,    91,    92,    93,    95,
+      96,    98,   101,   102,   104,   105,   107,   108,   109,   110,
+     111,   112,   113,   117,   118,   119,   120,   122,   123,   125,
+     126,   128,   129,   131,   132,   135,   136,   137,   138,   139,
+     140,   141,   142,   143,   144,   145,   146,   147,   148,   149,
+     150,   151,   152,   153,   154,   159,   160
 };
 #endif
 
@@ -1524,7 +1528,7 @@ yyreduce:
         case 2:
 
 /* Line 1455 of yacc.c  */
-#line 48 "calc.y"
+#line 52 "calc.y"
     {
 							(yyval)=csp_node(nonterminal_name[Program],(yyvsp[(1) - (1)]) , NULL) ;	
 							node_head = (yyval) ;
@@ -1535,280 +1539,280 @@ yyreduce:
   case 3:
 
 /* Line 1455 of yacc.c  */
-#line 54 "calc.y"
+#line 58 "calc.y"
     {(yyval)=empty_node(nonterminal_name[ExtDefList]) ;				;}
     break;
 
   case 4:
 
 /* Line 1455 of yacc.c  */
-#line 55 "calc.y"
+#line 59 "calc.y"
     {(yyval)=csp_node(nonterminal_name[ExtDefList],(yyvsp[(1) - (2)]),(yyvsp[(2) - (2)]),NULL);			;}
     break;
 
   case 5:
 
 /* Line 1455 of yacc.c  */
-#line 57 "calc.y"
+#line 61 "calc.y"
     {(yyval)=csp_node(nonterminal_name[ExtDef],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);			;}
     break;
 
   case 6:
 
 /* Line 1455 of yacc.c  */
-#line 58 "calc.y"
+#line 62 "calc.y"
     {(yyval)=csp_node(nonterminal_name[ExtDef],(yyvsp[(1) - (2)]),(yyvsp[(2) - (2)]),NULL);			;}
     break;
 
   case 7:
 
 /* Line 1455 of yacc.c  */
-#line 59 "calc.y"
+#line 63 "calc.y"
     {(yyval)=csp_node(nonterminal_name[ExtDef],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);			;}
     break;
 
   case 8:
 
 /* Line 1455 of yacc.c  */
-#line 60 "calc.y"
+#line 64 "calc.y"
     {yyerror(": Expected \";\"\n");yyerrok;					;}
     break;
 
   case 9:
 
 /* Line 1455 of yacc.c  */
-#line 61 "calc.y"
+#line 65 "calc.y"
     {yyerror(": error in Specifier\n");yyerrok;				;}
     break;
 
   case 10:
 
 /* Line 1455 of yacc.c  */
-#line 62 "calc.y"
+#line 66 "calc.y"
     {yyerror(": Expected \";\"\n");yyerrok;					;}
     break;
 
   case 11:
 
 /* Line 1455 of yacc.c  */
-#line 64 "calc.y"
+#line 68 "calc.y"
     {(yyval)=csp_node(nonterminal_name[ExtDecList],(yyvsp[(1) - (1)]),NULL);			;}
     break;
 
   case 12:
 
 /* Line 1455 of yacc.c  */
-#line 65 "calc.y"
+#line 69 "calc.y"
     {(yyval)=csp_node(nonterminal_name[ExtDecList],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
     break;
 
   case 13:
 
 /* Line 1455 of yacc.c  */
-#line 67 "calc.y"
+#line 71 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Specifier],(yyvsp[(1) - (1)]),NULL);			;}
     break;
 
   case 14:
 
 /* Line 1455 of yacc.c  */
-#line 68 "calc.y"
+#line 72 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Specifier],(yyvsp[(1) - (1)]),NULL);			;}
     break;
 
   case 15:
 
 /* Line 1455 of yacc.c  */
-#line 70 "calc.y"
+#line 74 "calc.y"
     {(yyval)=csp_node(nonterminal_name[StructSpecifier],(yyvsp[(1) - (5)]),(yyvsp[(2) - (5)]),(yyvsp[(3) - (5)]),(yyvsp[(4) - (5)]),(yyvsp[(5) - (5)]),NULL);	;}
     break;
 
   case 16:
 
 /* Line 1455 of yacc.c  */
-#line 71 "calc.y"
+#line 75 "calc.y"
     {(yyval)=csp_node(nonterminal_name[StructSpecifier],(yyvsp[(1) - (2)]),(yyvsp[(2) - (2)]),NULL);		;}
     break;
 
   case 17:
 
 /* Line 1455 of yacc.c  */
-#line 72 "calc.y"
+#line 76 "calc.y"
     {yyerror(": error in struct specifier\n");yyerrok;			;}
     break;
 
   case 18:
 
 /* Line 1455 of yacc.c  */
-#line 73 "calc.y"
+#line 77 "calc.y"
     {yyerror(": Expected \"}\"\n");yyerrok;					;}
     break;
 
   case 19:
 
 /* Line 1455 of yacc.c  */
-#line 76 "calc.y"
+#line 80 "calc.y"
     {(yyval)=empty_node(nonterminal_name[OptTag]) ;			;}
     break;
 
   case 20:
 
 /* Line 1455 of yacc.c  */
-#line 77 "calc.y"
-    {(yyval)=csp_node(nonterminal_name[OptTag],(yyvsp[(1) - (1)]),NULL);			;}
+#line 81 "calc.y"
+    {opt_tag_id((yyvsp[(1) - (1)]));(yyval)=csp_node(nonterminal_name[OptTag],(yyvsp[(1) - (1)]),NULL);	;}
     break;
 
   case 21:
 
 /* Line 1455 of yacc.c  */
-#line 79 "calc.y"
-    {(yyval)=csp_node(nonterminal_name[Tag],(yyvsp[(1) - (1)]),NULL);			;}
+#line 83 "calc.y"
+    {tag_id((yyvsp[(1) - (1)]));(yyval)=csp_node(nonterminal_name[Tag],(yyvsp[(1) - (1)]),NULL);	;}
     break;
 
   case 22:
 
 /* Line 1455 of yacc.c  */
-#line 82 "calc.y"
-    {(yyval)=csp_node(nonterminal_name[VarDec],(yyvsp[(1) - (1)]),NULL);			;}
+#line 86 "calc.y"
+    {fun_var_id((yyvsp[(1) - (1)]),VARIABLE_KIND);(yyval)=csp_node(nonterminal_name[VarDec],(yyvsp[(1) - (1)]),NULL);	;}
     break;
 
   case 23:
 
 /* Line 1455 of yacc.c  */
-#line 83 "calc.y"
+#line 87 "calc.y"
     {(yyval)=csp_node(nonterminal_name[VarDec],(yyvsp[(1) - (4)]),(yyvsp[(2) - (4)]),(yyvsp[(3) - (4)]),(yyvsp[(4) - (4)]),NULL);	;}
     break;
 
   case 24:
 
 /* Line 1455 of yacc.c  */
-#line 84 "calc.y"
+#line 88 "calc.y"
     {yyerror(": Expected \"]\"\n");yyerrok;				;}
     break;
 
   case 25:
 
 /* Line 1455 of yacc.c  */
-#line 86 "calc.y"
-    {(yyval)=csp_node(nonterminal_name[FunDec],(yyvsp[(1) - (4)]),(yyvsp[(2) - (4)]),(yyvsp[(3) - (4)]),(yyvsp[(4) - (4)]),NULL);	;}
+#line 90 "calc.y"
+    {fun_var_id((yyvsp[(1) - (4)]),FUNCTION_KIND);(yyval)=csp_node(nonterminal_name[FunDec],(yyvsp[(1) - (4)]),(yyvsp[(2) - (4)]),(yyvsp[(3) - (4)]),(yyvsp[(4) - (4)]),NULL);	;}
     break;
 
   case 26:
 
 /* Line 1455 of yacc.c  */
-#line 87 "calc.y"
-    {(yyval)=csp_node(nonterminal_name[FunDec],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
+#line 91 "calc.y"
+    {fun_var_id((yyvsp[(1) - (3)]),FUNCTION_KIND);(yyval)=csp_node(nonterminal_name[FunDec],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
     break;
 
   case 27:
 
 /* Line 1455 of yacc.c  */
-#line 88 "calc.y"
+#line 92 "calc.y"
     {yyerror(": Expected \")\" \n");yyerrok;			;}
     break;
 
   case 28:
 
 /* Line 1455 of yacc.c  */
-#line 89 "calc.y"
+#line 93 "calc.y"
     {yyerror(": Expected \")\" \n");yyerrok;			;}
     break;
 
   case 29:
 
 /* Line 1455 of yacc.c  */
-#line 91 "calc.y"
+#line 95 "calc.y"
     {(yyval)=csp_node(nonterminal_name[VarList],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
     break;
 
   case 30:
 
 /* Line 1455 of yacc.c  */
-#line 92 "calc.y"
+#line 96 "calc.y"
     {(yyval)=csp_node(nonterminal_name[VarList],(yyvsp[(1) - (1)]),NULL);		;}
     break;
 
   case 31:
 
 /* Line 1455 of yacc.c  */
-#line 94 "calc.y"
+#line 98 "calc.y"
     {(yyval)=csp_node(nonterminal_name[ParamDec],(yyvsp[(1) - (2)]),(yyvsp[(2) - (2)]),NULL);		;}
     break;
 
   case 32:
 
 /* Line 1455 of yacc.c  */
-#line 97 "calc.y"
+#line 101 "calc.y"
     {(yyval)=csp_node(nonterminal_name[CompSt],(yyvsp[(1) - (4)]),(yyvsp[(2) - (4)]),(yyvsp[(3) - (4)]),(yyvsp[(4) - (4)]),NULL);	;}
     break;
 
   case 33:
 
 /* Line 1455 of yacc.c  */
-#line 98 "calc.y"
+#line 102 "calc.y"
     {yyerror(": Expected \"{\"\n");yyerrok;		;}
     break;
 
   case 34:
 
 /* Line 1455 of yacc.c  */
-#line 100 "calc.y"
+#line 104 "calc.y"
     {(yyval)=empty_node(nonterminal_name[StmtList]) ;			;}
     break;
 
   case 35:
 
 /* Line 1455 of yacc.c  */
-#line 101 "calc.y"
+#line 105 "calc.y"
     {(yyval)=csp_node(nonterminal_name[StmtList],(yyvsp[(1) - (2)]),(yyvsp[(2) - (2)]),NULL);		;}
     break;
 
   case 36:
 
 /* Line 1455 of yacc.c  */
-#line 103 "calc.y"
+#line 107 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Stmt],(yyvsp[(1) - (2)]),(yyvsp[(2) - (2)]),NULL);		;}
     break;
 
   case 37:
 
 /* Line 1455 of yacc.c  */
-#line 104 "calc.y"
+#line 108 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Stmt],(yyvsp[(1) - (1)]),NULL);			;}
     break;
 
   case 38:
 
 /* Line 1455 of yacc.c  */
-#line 105 "calc.y"
+#line 109 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Stmt],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
     break;
 
   case 39:
 
 /* Line 1455 of yacc.c  */
-#line 106 "calc.y"
+#line 110 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Stmt],(yyvsp[(1) - (5)]),(yyvsp[(2) - (5)]),(yyvsp[(3) - (5)]),(yyvsp[(4) - (5)]),(yyvsp[(5) - (5)]),NULL);	;}
     break;
 
   case 40:
 
 /* Line 1455 of yacc.c  */
-#line 107 "calc.y"
+#line 111 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Stmt],(yyvsp[(1) - (7)]),(yyvsp[(2) - (7)]),(yyvsp[(3) - (7)]),(yyvsp[(4) - (7)]),(yyvsp[(5) - (7)]),(yyvsp[(6) - (7)]),(yyvsp[(7) - (7)]),NULL);	;}
     break;
 
   case 41:
 
 /* Line 1455 of yacc.c  */
-#line 108 "calc.y"
+#line 112 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Stmt],(yyvsp[(1) - (5)]),(yyvsp[(2) - (5)]),(yyvsp[(3) - (5)]),(yyvsp[(4) - (5)]),(yyvsp[(5) - (5)]),NULL);	;}
     break;
 
   case 42:
 
 /* Line 1455 of yacc.c  */
-#line 109 "calc.y"
+#line 113 "calc.y"
     {	
 						yyerror(": unknown statement before \";\"\n");
 						yyerrok;
@@ -1818,224 +1822,224 @@ yyreduce:
   case 43:
 
 /* Line 1455 of yacc.c  */
-#line 113 "calc.y"
+#line 117 "calc.y"
     {yyerror(": Expected \")\" \n");yyerrok;	;}
     break;
 
   case 44:
 
 /* Line 1455 of yacc.c  */
-#line 114 "calc.y"
+#line 118 "calc.y"
     {yyerror(": Expected \"(\" \n");yyerrok;	;}
     break;
 
   case 45:
 
 /* Line 1455 of yacc.c  */
-#line 115 "calc.y"
+#line 119 "calc.y"
     {yyerror(": Expected \";\"\n");yyerrok;		;}
     break;
 
   case 46:
 
 /* Line 1455 of yacc.c  */
-#line 116 "calc.y"
+#line 120 "calc.y"
     {yyerror(": Expected \";\" \n");yyerrok;	;}
     break;
 
   case 47:
 
 /* Line 1455 of yacc.c  */
-#line 118 "calc.y"
+#line 122 "calc.y"
     {(yyval)=empty_node(nonterminal_name[DefList]) ;			;}
     break;
 
   case 48:
 
 /* Line 1455 of yacc.c  */
-#line 119 "calc.y"
+#line 123 "calc.y"
     {(yyval)=csp_node(nonterminal_name[DefList],(yyvsp[(1) - (2)]),(yyvsp[(2) - (2)]),NULL);		;}
     break;
 
   case 49:
 
 /* Line 1455 of yacc.c  */
-#line 121 "calc.y"
+#line 125 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Def],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
     break;
 
   case 50:
 
 /* Line 1455 of yacc.c  */
-#line 122 "calc.y"
+#line 126 "calc.y"
     {yyerror(": Expected \"; 1\"\n");yyerrok;			;}
     break;
 
   case 51:
 
 /* Line 1455 of yacc.c  */
-#line 124 "calc.y"
+#line 128 "calc.y"
     {(yyval)=csp_node(nonterminal_name[DecList],(yyvsp[(1) - (1)]),NULL);		;}
     break;
 
   case 52:
 
 /* Line 1455 of yacc.c  */
-#line 125 "calc.y"
+#line 129 "calc.y"
     {(yyval)=csp_node(nonterminal_name[DecList],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
     break;
 
   case 53:
 
 /* Line 1455 of yacc.c  */
-#line 127 "calc.y"
+#line 131 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Dec],(yyvsp[(1) - (1)]),NULL);			;}
     break;
 
   case 54:
 
 /* Line 1455 of yacc.c  */
-#line 128 "calc.y"
+#line 132 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Dec],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
     break;
 
   case 55:
 
 /* Line 1455 of yacc.c  */
-#line 131 "calc.y"
+#line 135 "calc.y"
     {(yyval)=cp_node(nonterminal_name[Exp],(yyvsp[(1) - (1)])) ;				;}
     break;
 
   case 56:
 
 /* Line 1455 of yacc.c  */
-#line 132 "calc.y"
+#line 136 "calc.y"
     {(yyval)=cp_node(nonterminal_name[Exp],(yyvsp[(1) - (1)]));				;}
     break;
 
   case 57:
 
 /* Line 1455 of yacc.c  */
-#line 133 "calc.y"
+#line 137 "calc.y"
     {(yyval)=cp_node(nonterminal_name[Exp],(yyvsp[(1) - (1)]));				;}
     break;
 
   case 58:
 
 /* Line 1455 of yacc.c  */
-#line 134 "calc.y"
+#line 138 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Exp],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
     break;
 
   case 59:
 
 /* Line 1455 of yacc.c  */
-#line 135 "calc.y"
+#line 139 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Exp],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
     break;
 
   case 60:
 
 /* Line 1455 of yacc.c  */
-#line 136 "calc.y"
+#line 140 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Exp],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
     break;
 
   case 61:
 
 /* Line 1455 of yacc.c  */
-#line 137 "calc.y"
+#line 141 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Exp],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
     break;
 
   case 62:
 
 /* Line 1455 of yacc.c  */
-#line 138 "calc.y"
+#line 142 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Exp],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
     break;
 
   case 63:
 
 /* Line 1455 of yacc.c  */
-#line 139 "calc.y"
+#line 143 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Exp],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
     break;
 
   case 64:
 
 /* Line 1455 of yacc.c  */
-#line 140 "calc.y"
+#line 144 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Exp],(yyvsp[(1) - (2)]),(yyvsp[(2) - (2)]),NULL);			;}
     break;
 
   case 65:
 
 /* Line 1455 of yacc.c  */
-#line 141 "calc.y"
+#line 145 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Exp],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
     break;
 
   case 66:
 
 /* Line 1455 of yacc.c  */
-#line 142 "calc.y"
+#line 146 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Exp],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
     break;
 
   case 67:
 
 /* Line 1455 of yacc.c  */
-#line 143 "calc.y"
+#line 147 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Exp],(yyvsp[(1) - (2)]),(yyvsp[(2) - (2)]),NULL);			;}
     break;
 
   case 68:
 
 /* Line 1455 of yacc.c  */
-#line 144 "calc.y"
+#line 148 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Exp],(yyvsp[(1) - (4)]),(yyvsp[(2) - (4)]),(yyvsp[(3) - (4)]),(yyvsp[(4) - (4)]),NULL);		;}
     break;
 
   case 69:
 
 /* Line 1455 of yacc.c  */
-#line 145 "calc.y"
+#line 149 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Exp],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
     break;
 
   case 70:
 
 /* Line 1455 of yacc.c  */
-#line 146 "calc.y"
+#line 150 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Exp],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
     break;
 
   case 71:
 
 /* Line 1455 of yacc.c  */
-#line 147 "calc.y"
+#line 151 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Exp],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
     break;
 
   case 72:
 
 /* Line 1455 of yacc.c  */
-#line 148 "calc.y"
+#line 152 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Exp],(yyvsp[(1) - (4)]),(yyvsp[(2) - (4)]),(yyvsp[(3) - (4)]),(yyvsp[(4) - (4)]),NULL);		;}
     break;
 
   case 73:
 
 /* Line 1455 of yacc.c  */
-#line 149 "calc.y"
+#line 153 "calc.y"
     {yyerror("\n");yyerrok;				;}
     break;
 
   case 74:
 
 /* Line 1455 of yacc.c  */
-#line 150 "calc.y"
+#line 154 "calc.y"
     {
 				yyerror(": unknown stuff before \"]\"\n");
 				yyerrok;
@@ -2045,21 +2049,21 @@ yyreduce:
   case 75:
 
 /* Line 1455 of yacc.c  */
-#line 155 "calc.y"
+#line 159 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Args],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
     break;
 
   case 76:
 
 /* Line 1455 of yacc.c  */
-#line 156 "calc.y"
+#line 160 "calc.y"
     {(yyval)=csp_node(nonterminal_name[Args],(yyvsp[(1) - (1)]),NULL);			;}
     break;
 
 
 
 /* Line 1455 of yacc.c  */
-#line 2063 "calc.yy.c"
+#line 2067 "calc.yy.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2271,7 +2275,7 @@ yyreturn:
 
 
 /* Line 1675 of yacc.c  */
-#line 158 "calc.y"
+#line 162 "calc.y"
 
 
 
@@ -2343,7 +2347,80 @@ NODE * empty_node(const char * name ) {
 	node->name = name ;
 	return (NODE *)node ;
 }
+static int fun_var_id(NODE* node , int kind){
+	IDTEM* tid = node->value.type_p ;
+	switch(tid->kind){ 
+		IDTEM* newid ;
+		case UNSPECIFIED:
+		tid->kind = kind; 
+		break;
 
+		case STRUCTURE_KIND:
+		if((newid = malloc(sizeof(IDTEM))) != NULL){
+			memcpy(newid,tid,sizeof(IDTEM));
+			newid->kind = kind ;
+			newid->next = ((IDTEM*)(node->value.type_p))->next;
+			if(newid->next != NULL){
+				newid->next->previous = newid ;
+			}
+			newid->previous = node->value.type_p ;
+			((IDTEM*)(node->value.type_p))->next = newid ;
+			node->value.type_p = newid ;
+		}else{
+			perror("null pointer");
+			exit(EXIT_FAILURE);
+		}
+		break ;
+
+		default:
+		break;
+	}
+	return 0;
+}
+
+static int tag_id(NODE* node){
+	IDTEM* tid = node->value.type_p ;
+	if(tid->kind == STRUCTURE_KIND){
+	}else if(tid->next != NULL && tid->next->kind == STRUCTURE_KIND){
+		node->value.type_p = tid->next ;
+	}else{
+		error("undefined structure",17,node->line);
+	}
+	
+	return 0;
+}
+static int opt_tag_id(NODE* node){
+	IDTEM* tid = node->value.type_p ;
+	switch(tid->kind){ 
+		IDTEM* newid ;
+		case UNSPECIFIED:
+		tid->kind = STRUCTURE_KIND; 
+		break;
+	
+		case STRUCTURE_KIND:
+		error("structure redefined",16,node->line);
+		break;
+		
+		default:
+//		error("symbol redefined as a structure",16,node->line);
+		if((newid = malloc(sizeof(IDTEM))) != NULL){
+			memcpy(newid,tid,sizeof(IDTEM));
+			newid->kind = STRUCTURE_KIND ;
+			newid->next = ((IDTEM*)(node->value.type_p))->next;
+			if(newid->next != NULL){
+				newid->next->previous = newid ;
+			}
+			newid->previous = node->value.type_p ;
+			((IDTEM*)(node->value.type_p))->next = newid ;
+			node->value.type_p = newid ;
+		}else{
+			perror("null pointer");
+			exit(EXIT_FAILURE);
+		}
+		break ;
+	}
+	return 0;
+}
 int traverse_node_tree(NODE* head ){
 	char * temp;
 	if(head->line==0)goto recursive;
