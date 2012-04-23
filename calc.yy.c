@@ -2296,10 +2296,12 @@ int main (void){
 		putc('\n',stderr);
 		return -1;
 	}
-	traverse_item_list(idtable_head);
 	tab = (char *)malloc(1);
 	tab[0]='\0';
-	if(noerror )traverse_node_tree((NODE*)head);
+	if(noerror ){
+		traverse_node_tree((NODE*)head);
+		traverse_item_list(idtable_head);
+	}
 
 	free_list(idtable_head) ;
 	free_tree(head);
@@ -2358,6 +2360,9 @@ static int fun_var_id(NODE* node , int kind){
 		case STRUCTURE_KIND:
 		if((newid = malloc(sizeof(IDTEM))) != NULL){
 			memcpy(newid,tid,sizeof(IDTEM));
+			newid->name = malloc(strlen(tid->name)+1);
+			strcpy(newid->name , tid->name );
+			newid->cur = newid ;
 			newid->kind = kind ;
 			newid->next = ((IDTEM*)(node->value.type_p))->next;
 			if(newid->next != NULL){
@@ -2405,6 +2410,7 @@ static int opt_tag_id(NODE* node){
 //		error("symbol redefined as a structure",16,node->line);
 		if((newid = malloc(sizeof(IDTEM))) != NULL){
 			memcpy(newid,tid,sizeof(IDTEM));
+			newid->cur = newid ;
 			newid->kind = STRUCTURE_KIND ;
 			newid->next = ((IDTEM*)(node->value.type_p))->next;
 			if(newid->next != NULL){

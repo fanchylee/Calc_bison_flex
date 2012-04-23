@@ -43,10 +43,11 @@ struct id_item{
 	}u;
 	char* name ;
 	unsigned char overlap ;
-	struct id_item * back ;
+	struct id_item * backward ;
 	struct id_item * forward ;
 	struct id_item * next ;
 	struct id_item * previous ;
+	struct id_item * cur ;
 };
 typedef struct id_item IDTEM ;
 

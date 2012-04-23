@@ -9,12 +9,14 @@
 
 static int analyze_def(NODE* head, enum nonterminal_enum tp);
 static int warning(const char * information, long int line ) ;
-static int analyze_funvar(NODE* head);
+static int analyze_varlist(NODE* head);
 static int analyze_extdeclist(NODE* head);
 static int analyze_vardec(NODE* head);
 int error(const char * info , int type ,long int line) ;
 static int addvar(int kind,IDTEM* tid,NODE* head);
 static void allowoverlap(IDTEM * head);
+static void disallowoverlap(IDTEM * head);
+static void setcur(IDTEM * cur);
 
 int analyze(NODE* head){
 	const char * ctemp ;
@@ -27,6 +29,15 @@ int analyze(NODE* head){
 		printf("%s: %f\n",head->name,(head->value).type_float) ;
 	}else if(ctemp == terminal_name[INT-WHILE]){
 		printf("%s: %d\n",head->name,(head->value).type_int);
+	}else if(ctemp == terminal_name[LC - WHILE]){
+		printf("%s (%ld)\n",head->name,head->line);
+		if(head->parent->previous_sister != NULL){
+		}else{
+			allowoverlap(idtable_head);
+		}
+	}else if(ctemp == terminal_name[RC - WHILE]){
+		printf("%s (%ld)\n",head->name,head->line);
+		disallowoverlap(idtable_head);
 	}else if(ctemp == nonterminal_name[ExtDef]){
 		printf("%s (%ld)\n",head->name,head->line);
 		analyze_def(head,ExtDef);
@@ -38,7 +49,7 @@ int analyze(NODE* head){
 		analyze_extdeclist(head);
 	}else if(ctemp == nonterminal_name[VarList]){
 		printf("%s (%ld)\n",head->name,head->line);
-		analyze_funvar(head);
+		analyze_varlist(head);
 	}else if(ctemp == nonterminal_name[VarDec]){
 		printf("%s (%ld)\n",head->name,head->line);
 		analyze_vardec(head);
@@ -126,8 +137,15 @@ static int analyze_def(NODE* head, enum nonterminal_enum tp){
 	}
 	return 0;
 }
-static int analyze_funvar(NODE* head){
-	allowoverlap(idtable_head);
+static int analyze_varlist(NODE* head){
+	NODE* temp = head ;
+	if((temp = head->previous_sister)->name == terminal_name[COMMA - WHILE]){
+	}else if(temp->name == terminal_name[LP-WHILE]){
+		allowoverlap(idtable_head);
+	}else {
+		perror("unknown error :impossible varlist previous sister");
+		exit(EXIT_FAILURE);
+	}
 	return 0;
 }
 static int analyze_extdeclist(NODE* head){
@@ -159,6 +177,112 @@ static int analyze_vardec(NODE* head){
 	if((temp = head->child_head)->name == terminal_name[ID - WHILE]){
 		tid = temp->value.type_p;
 		addvar(kind,tid,head);
+	}
+	return 0;
+}
+static void allowoverlap(IDTEM * head){
+	if(head == NULL){return;}else{
+		allowoverlap(head->next);
+	}
+	if(head->overlap == DISALLOW){
+		head->overlap = ALLOW ;
+	}
+}
+static void disallowoverlap(IDTEM * head){
+	if(head == NULL){return ;}else{
+		disallowoverlap(head->next);
+	}
+	if(head->overlap == DISALLOW){
+		if(head->forward != NULL){
+		}else{
+			head->forward = malloc(sizeof(IDTEM));
+			memset(head->forward,0,sizeof(IDTEM));
+			head->forward->name = malloc(strlen(head->name)+1);
+			strcpy(head->forward->name ,head->name);
+			head->forward->overlap = UNSPECIFIED ;
+		}
+		if(head->previous != NULL)
+			head->previous->next = head->forward ;
+		if(head->next != NULL)
+			head->next->previous = head->forward ;
+		head->forward->previous = head->previous ;
+		head->forward->next = head->next ;
+
+		head->previous = head->next = NULL ;
+		head = head->forward ;
+		setcur(head);
+	}
+}
+static addvar(int kind,IDTEM* tid,NODE* head){
+	tid = tid->cur ;
+	if(tid->kind == STRUCTURE_KIND){
+		perror("unknown error :here cannot be structure");
+		exit(EXIT_FAILURE);
+	}
+	switch(tid->overlap){
+		IDTEM* newid ;
+		case ALLOW:
+		newid = malloc(sizeof(IDTEM));
+		tid->overlap = DISALLOW;
+		memcpy(newid,tid,sizeof(IDTEM));
+		newid->cur = newid ;
+		if(newid->next != NULL)
+			newid->next->previous = newid ;
+		if(newid->previous != NULL)
+			newid->previous->next = newid ;
+		tid->next = tid->previous = NULL;
+		tid->backward = newid ;
+		newid->forward = tid ;
+		tid = newid ;
+		setcur(newid);
+		case UNSPECIFIED:
+		tid->overlap = DISALLOW ;
+		tid->kind = kind ;
+		switch(kind){  
+			case VARIABLE_KIND:
+			tid->u.t = head->attr ;	
+			break ;
+
+			case STRUCTUREFIELD_KIND:
+			tid->u.structurefieldtype.t = head->attr ;
+			//TODO  structurefieldtype.structure 
+			break ;
+
+			default:
+			perror("unknown error :unknown kind");
+			exit(EXIT_FAILURE);
+			break ;
+		}
+		break;
+		
+		
+		case DISALLOW:
+		error("Symbol redeclared as variable",3,head->child_head->line);
+		break;
+		
+		default:
+		perror("unknown error :unknown overlap state");
+		exit(EXIT_FAILURE);
+		break;
+	}
+}
+static void setcur(IDTEM * cur){
+	IDTEM * ttid = cur ;
+	ttid->cur = cur ;
+	while((ttid = ttid->forward) != NULL){
+		ttid->cur = cur ;
+	}
+	ttid = cur ;
+	while((ttid = ttid->backward) != NULL){
+		ttid->cur = cur ;
+	}
+}
+static int warning(const char * information , long int line){
+	return fprintf(stderr, "warning at line %ld: %s\n",line , information);
+}
+int error(const char * info , int type ,long int line){
+	return fprintf(stdout,"Error type %d at line %ld: %s\n",type,line,info);
+}
 /*
 		switch(tid->kind){
 			case STRUCTURE_KIND:
@@ -185,64 +309,3 @@ static int analyze_vardec(NODE* head){
 			}
 		}
 */
-	}
-	return 0;
-}
-static void allowoverlap(IDTEM * head){
-	if(head == NULL){return;}else{
-		allowoverlap(head->next);
-	}
-	if(head->overlap == DISALLOW){
-		head->overlap = ALLOW ;
-	}
-}
-static addvar(int kind,IDTEM* tid,NODE* head){
-	if(tid->kind == STRUCTURE_KIND){
-		perror("unknown error :here cannot be structure");
-		exit(EXIT_FAILURE);
-	}
-	switch(tid->overlap){
-		IDTEM* newid ;
-		case ALLOW:
-		newid = malloc(sizeof(IDTEM));
-		tid->overlap = DISALLOW;
-		memcpy(newid,tid,sizeof(IDTEM));
-		tid->next = tid->previous = NULL;
-		tid = newid ;
-		case UNSPECIFIED:
-		tid->overlap = DISALLOW ;
-		tid->kind = kind ;
-		switch(kind){  
-			case VARIABLE_KIND:
-			tid->u.t = head->attr ;
-			break ;
-
-			case STRUCTUREFIELD_KIND:
-			tid->u.structurefieldtype.t = head->attr ;
-			//TODO  structurefieldtype.structure 
-			break ;
-
-			default:
-			perror("unknown error :unknown kind");
-			exit(EXIT_FAILURE);
-			break ;
-		}
-		break;
-		
-		
-		case DISALLOW:
-		error("Symbol redeclared as variable",3,head->child_head->line);
-		break;
-		
-		default:
-		perror("unknown error :unknown overlap state");
-		exit(EXIT_FAILURE);
-		break;
-	}
-}
-static int warning(const char * information , long int line){
-	return fprintf(stderr, "warning at line %ld: %s\n",line , information);
-}
-int error(const char * info , int type ,long int line){
-	return fprintf(stdout,"Error type %d at line %ld: %s\n",type,line,info);
-}

@@ -2163,6 +2163,7 @@ IDTEM* str_create_idtem(const char * str) {
 	n = (char*)calloc(1, sizeof(strlen(str)));
 	strcpy(n , str) ;
 	i->name = n ;
+	i->cur = i ;
 	return i ;
 }
 IDTEM* install_id(const char * str) {
@@ -2201,7 +2202,7 @@ int traverse_item_list( IDTEM*  head){
 	IDTEM* item = NULL ;
 	item = head->next  ;
 	while(item != NULL){
-		fputs(item->name,stdout);
+		printf("name:%s,kind:%d",item->name, item->kind );
 		fputc('\n',stdout);
 		item= item->next ;
 	}

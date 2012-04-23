@@ -23,8 +23,8 @@ int main() {
 		i=2;
 	}
 	{
-		int a;
-		float ii ;
+		int ad;
+		float iid ;
 		ii = a;
 	}
 }
