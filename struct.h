@@ -5,9 +5,9 @@
 #include "type.h"
 
 #define VARIABLE_KIND 1
-#define FUNCTION_KIND 2
-#define STRUCTUREFIELD_KIND 3
-#define STRUCTURE_KIND 4
+#define STRUCTURE_KIND 2
+#define FUNCTION_KIND 3
+#define STRUCTUREFIELD_KIND 4
 
 #define UNSPECIFIED 0
 #define DISALLOW 1
@@ -34,15 +34,15 @@ struct node{
 typedef struct node NODE ;
 
 struct id_item{
-	enum kind_ {Variable=1 , Structure, Function, StructionField } kind ;
+	enum kind_ {Variable=1 , Structure=2, Function=3, StructionField=4 } kind ;
 	union {
 		Type* t; //for variables
-		struct {Type* ret;struct id_item * varhead;} funtype;
-		struct {Type* t;} structruetype ;
+		struct {Type* ret;FieldList * varhead;} funtype;
+		struct {Type* t;} structuretype ;
 		struct {Type* t;Type* structure;} structurefieldtype ;
 	}u;
 	char* name ;
-	unsigned char overlap ;
+	unsigned long int overlap ;
 	struct id_item * backward ;
 	struct id_item * forward ;
 	struct id_item * next ;

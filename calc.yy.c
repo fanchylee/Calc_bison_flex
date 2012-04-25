@@ -1659,21 +1659,21 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 81 "calc.y"
-    {opt_tag_id((yyvsp[(1) - (1)]));(yyval)=csp_node(nonterminal_name[OptTag],(yyvsp[(1) - (1)]),NULL);	;}
+    {/*opt_tag_id($1);*/(yyval)=csp_node(nonterminal_name[OptTag],(yyvsp[(1) - (1)]),NULL);	;}
     break;
 
   case 21:
 
 /* Line 1455 of yacc.c  */
 #line 83 "calc.y"
-    {tag_id((yyvsp[(1) - (1)]));(yyval)=csp_node(nonterminal_name[Tag],(yyvsp[(1) - (1)]),NULL);	;}
+    {/*tag_id($1);*/(yyval)=csp_node(nonterminal_name[Tag],(yyvsp[(1) - (1)]),NULL);	;}
     break;
 
   case 22:
 
 /* Line 1455 of yacc.c  */
 #line 86 "calc.y"
-    {fun_var_id((yyvsp[(1) - (1)]),VARIABLE_KIND);(yyval)=csp_node(nonterminal_name[VarDec],(yyvsp[(1) - (1)]),NULL);	;}
+    {/*fun_var_id($1,VARIABLE_KIND);*/(yyval)=csp_node(nonterminal_name[VarDec],(yyvsp[(1) - (1)]),NULL);	;}
     break;
 
   case 23:
@@ -1694,14 +1694,14 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 90 "calc.y"
-    {fun_var_id((yyvsp[(1) - (4)]),FUNCTION_KIND);(yyval)=csp_node(nonterminal_name[FunDec],(yyvsp[(1) - (4)]),(yyvsp[(2) - (4)]),(yyvsp[(3) - (4)]),(yyvsp[(4) - (4)]),NULL);	;}
+    {/*fun_var_id($1,FUNCTION_KIND);*/(yyval)=csp_node(nonterminal_name[FunDec],(yyvsp[(1) - (4)]),(yyvsp[(2) - (4)]),(yyvsp[(3) - (4)]),(yyvsp[(4) - (4)]),NULL);	;}
     break;
 
   case 26:
 
 /* Line 1455 of yacc.c  */
 #line 91 "calc.y"
-    {fun_var_id((yyvsp[(1) - (3)]),FUNCTION_KIND);(yyval)=csp_node(nonterminal_name[FunDec],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
+    {/*fun_var_id($1,FUNCTION_KIND);*/(yyval)=csp_node(nonterminal_name[FunDec],(yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),NULL);		;}
     break;
 
   case 27:
@@ -2303,8 +2303,8 @@ int main (void){
 		traverse_item_list(idtable_head);
 	}
 
-	free_list(idtable_head) ;
-	free_tree(head);
+	//free_list(idtable_head) ;
+	//free_tree(head);
 	free(tab) ;
 	return 0 ;
 }
@@ -2399,7 +2399,6 @@ static int opt_tag_id(NODE* node){
 	switch(tid->kind){ 
 		IDTEM* newid ;
 		case UNSPECIFIED:
-		tid->kind = STRUCTURE_KIND; 
 		break;
 	
 		case STRUCTURE_KIND:

@@ -1,7 +1,7 @@
-int iii;
+float iii;
 int xx;
-//struct xx{int i;}xxxx ;
-int main() {
+struct xxxxx{int i;} dxxx;
+float main() {
 /*
 
 
@@ -10,9 +10,9 @@ int main() {
 //;afjsdlajfls;kdfasd;jlafj;sdl
 	float a[10][2];
 	int i = 0 ,j,k=3,d;
-	struct ii{int i;} iii ;
-	int xxxx;
-	struct xx xxx;
+	struct ii{int i;}iiiii  ;
+	struct xxxxx xxx;
+	int a;
 	
 	a[5][3] = 1.5;
 	if( a[1][2] == 0){
@@ -23,13 +23,10 @@ int main() {
 		i=2;
 	}
 	{
-		int ad;
 		float iid ;
-		ii = a;
 	}
 }
-
-struct xx xxx(float a){
-	struct xx xxx;
+struct xxxxx afa(float a){
+	struct xxxxx xxx;
 	return xxxx ;
 }

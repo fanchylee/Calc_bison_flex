@@ -78,17 +78,17 @@ StructSpecifier:  STRUCT OptTag LC DefList RC	{$$=csp_node(nonterminal_name[Stru
 		
 ;                                                                                                
 OptTag:	  /*empty*/                             {$$=empty_node(nonterminal_name[OptTag]) ;			}
-		| ID				{opt_tag_id($1);$$=csp_node(nonterminal_name[OptTag],$1,NULL);	}
+		| ID				{/*opt_tag_id($1);*/$$=csp_node(nonterminal_name[OptTag],$1,NULL);	}
 ;
-Tag:	  	  ID				{tag_id($1);$$=csp_node(nonterminal_name[Tag],$1,NULL);	}
+Tag:	  	  ID				{/*tag_id($1);*/$$=csp_node(nonterminal_name[Tag],$1,NULL);	}
 ;
  
-VarDec:		  ID				{fun_var_id($1,VARIABLE_KIND);$$=csp_node(nonterminal_name[VarDec],$1,NULL);	}
+VarDec:		  ID				{/*fun_var_id($1,VARIABLE_KIND);*/$$=csp_node(nonterminal_name[VarDec],$1,NULL);	}
 		| VarDec LB INT RB		{$$=csp_node(nonterminal_name[VarDec],$1,$2,$3,$4,NULL);	}
 		| VarDec LB INT error		{yyerror(": Expected \"]\"\n");yyerrok;				}
 ;
-FunDec:		  ID LP VarList RP		{fun_var_id($1,FUNCTION_KIND);$$=csp_node(nonterminal_name[FunDec],$1,$2,$3,$4,NULL);	}
-		| ID LP RP			{fun_var_id($1,FUNCTION_KIND);$$=csp_node(nonterminal_name[FunDec],$1,$2,$3,NULL);		}
+FunDec:		  ID LP VarList RP		{/*fun_var_id($1,FUNCTION_KIND);*/$$=csp_node(nonterminal_name[FunDec],$1,$2,$3,$4,NULL);	}
+		| ID LP RP			{/*fun_var_id($1,FUNCTION_KIND);*/$$=csp_node(nonterminal_name[FunDec],$1,$2,$3,NULL);		}
 		| ID LP VarList error		{yyerror(": Expected \")\" \n");yyerrok;			}
 		| ID LP error			{yyerror(": Expected \")\" \n");yyerrok;			}
 ;
@@ -186,8 +186,8 @@ int main (void){
 		traverse_item_list(idtable_head);
 	}
 
-	free_list(idtable_head) ;
-	free_tree(head);
+	//free_list(idtable_head) ;
+	//free_tree(head);
 	free(tab) ;
 	return 0 ;
 }
@@ -282,7 +282,6 @@ static int opt_tag_id(NODE* node){
 	switch(tid->kind){ 
 		IDTEM* newid ;
 		case UNSPECIFIED:
-		tid->kind = STRUCTURE_KIND; 
 		break;
 	
 		case STRUCTURE_KIND:

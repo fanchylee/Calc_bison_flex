@@ -4,19 +4,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include "const.h"
-#define BASIC_TYPE 0
-#define ARRAY_TYPE 1
-#define STRUCTURE_TYPE 2
+
+#define BASIC_TYPE 1 
+#define ARRAY_TYPE 2 
+#define STRUCTURE_TYPE 3 
+
 typedef struct Type_ Type;
 typedef struct FieldList_ FieldList;
 struct Type_{
-	enum { basic=0, array=1, structure=2 } kind;
-	union{int basic;struct { Type* elem; int size; }array;FieldList* structure;} u;
+	enum { basic=1, array=2, structure=3 } kind;
+	union{enum {type_INT,type_FLOAT} basic;struct { Type* elem; int size; }array;FieldList* structure;} u;
 };
 struct FieldList_
 {
     char* name;           // field name
-    Type type;            // field type 
+    Type* type;            // field type 
     FieldList* tail;       // next field
 };
 

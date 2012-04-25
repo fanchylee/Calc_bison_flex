@@ -3,9 +3,9 @@
 
 #define YYSTYPE NODE*
 #include "const.h"
-#define BASIC_TYPE 0
-#define ARRAY_TYPE 1
-#define STRUCTURE_TYPE 2
+#define BASIC_TYPE 1
+#define ARRAY_TYPE 2
+#define STRUCTURE_TYPE 3
 
 
 typedef struct Type_ Type;
@@ -13,16 +13,8 @@ typedef struct FieldList_ FieldList;
 
 struct Type_
 {
-    enum { basic, array, structure } kind;
-    union
-    {
-         //basic type
-         int basic;
-         // array type:information including element type and array size
-         struct { Type* elem; int size; } array;
-         // struct type : information is a linked list
-         FieldList* structure;
-    } u;
+	enum { basic=1, array, structure } kind;
+	union{enum {type_INT,type_FLOAT} basic;struct { Type* elem; int size; }array;FieldList* structure;} u;
 };
 struct FieldList_
 {
