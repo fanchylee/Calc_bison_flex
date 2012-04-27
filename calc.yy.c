@@ -2033,7 +2033,7 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 153 "calc.y"
-    {yyerror("\n");yyerrok;				;}
+    {yyerror("\n");yyerrok;						;}
     break;
 
   case 74:

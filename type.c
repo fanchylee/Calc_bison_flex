@@ -13,7 +13,7 @@ typedef struct Type_ Type;
 typedef struct FieldList_ FieldList;
 struct Type_{
 	enum { basic=1, array=2, structure=3 } kind;
-	union{enum {type_INT,type_FLOAT} basic;struct { Type* elem; int size; }array;FieldList* structure;} u;
+	union{enum {type_INT,type_FLOAT} basic;struct { Type* elem; int size; }array;struct {FieldList* field;char * name;}structure;} u;
 };
 struct FieldList_
 {
@@ -49,7 +49,8 @@ Type* create_type_kind(int type_kind,...){
 		break;
 
 		case STRUCTURE_TYPE:
-		tp->u.structure = va_arg(ap,FieldList*);
+		tp->u.structure.field = va_arg(ap,FieldList*);
+		tp->u.structure.name = va_arg(ap,char *);
 		break ;
 
 		default:

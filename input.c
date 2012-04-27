@@ -4,7 +4,6 @@ struct xxxxx{int i;} dxxx;
 float main() {
 /*
 
-
 ;lajfs
 */
 //;afjsdlajfls;kdfasd;jlafj;sdl
@@ -12,7 +11,6 @@ float main() {
 	int i = 0 ,j,k=3,d;
 	struct ii{int i;}iiiii  ;
 	struct xxxxx xxx;
-	int a;
 	
 	a[5][3] = 1.5;
 	if( a[1][2] == 0){
@@ -28,5 +26,5 @@ float main() {
 }
 struct xxxxx afa(float a){
 	struct xxxxx xxx;
-	return xxxx ;
+	return xxx ;
 }

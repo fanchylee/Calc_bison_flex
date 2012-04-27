@@ -6,7 +6,8 @@ extern const char * terminal_name[];
 extern const char * type_name[];
 enum type_enum{
 int_type=0,
-float_type} ;
+float_type,
+error_type} ;
 
 extern const char * nonterminal_name[] ;
 enum nonterminal_enum{

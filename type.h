@@ -14,7 +14,7 @@ typedef struct FieldList_ FieldList;
 struct Type_
 {
 	enum { basic=1, array, structure } kind;
-	union{enum {type_INT,type_FLOAT} basic;struct { Type* elem; int size; }array;FieldList* structure;} u;
+	union{enum {type_INT,type_FLOAT} basic;struct { Type* elem; int size; }array;struct {FieldList* field;char * name;}structure;} u;
 };
 struct FieldList_
 {

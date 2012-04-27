@@ -15,6 +15,7 @@ static int analyze_vardec(NODE* head);
 static void analyze_basictype(NODE* );
 static int analyze_opttag(NODE * opt_tag_tag,enum nonterminal_enum tp);
 static int analyze_tag(NODE * tag,enum nonterminal_enum tp);
+static Type* analyze_exp(NODE * exp);
 int error(const char * info , int type ,long int line) ;
 static int addvar(int kind,NODE* idnode);
 static int addfunc(NODE * fun);
@@ -25,6 +26,10 @@ static int addstruct(NODE* idnode);
 static int process_def(NODE * temp, enum nonterminal_enum tp );
 static int pass_attr_null_opttag(NODE * opt, Type* type);
 static int pass_attr_id_opttag(NODE * opt, Type* type);
+static int analyze_args_exp(NODE* exp , FieldList * arg);
+static int cmp_array(Type * arr1 , Type * arr2);
+static int cmp_structure_name(Type* stt1, Type* stt2);
+static int error_argument_array_struct(int err,int line);
 
 int analyze(NODE* head){
 	const char * ctemp ;
@@ -37,6 +42,9 @@ int analyze(NODE* head){
 		printf("%s: %f\n",head->name,(head->value).type_float) ;
 	}else if(ctemp == terminal_name[INT-WHILE]){
 		printf("%s: %d\n",head->name,(head->value).type_int);
+	}else if(ctemp == nonterminal_name[Exp]){
+		printf("%s (%ld)\n",head->name,head->line);
+		analyze_exp(head);
 	}else if(ctemp == terminal_name[LC - WHILE]){
 		printf("%s (%ld)\n",head->name,head->line);
 		if(head->parent->previous_sister != NULL){
@@ -244,14 +252,14 @@ static addvar(int kind,NODE* idnode){
 			tid->u.structurefieldtype.t =  head->attr;
 			{
 				Type* structuretype = idnode->attr ;
-				if(structuretype->u.structure == NULL){
-					structuretype->u.structure = malloc(sizeof(FieldList));
-					memset(structuretype->u.structure,0,sizeof(FieldList));
-					structuretype->u.structure->type = tid->u.structurefieldtype.t ;
-					structuretype->u.structure->name = malloc(strlen(tid->name)+1) ;
-					strcpy(structuretype->u.structure->name,tid->name);
+				if(structuretype->u.structure.field == NULL){
+					structuretype->u.structure.field = malloc(sizeof(FieldList));
+					memset(structuretype->u.structure.field,0,sizeof(FieldList));
+					structuretype->u.structure.field->type = tid->u.structurefieldtype.t ;
+					structuretype->u.structure.field->name = malloc(strlen(tid->name)+1) ;
+					strcpy(structuretype->u.structure.field->name,tid->name);
 				}else{
-					FieldList* fieldlist = structuretype->u.structure ;
+					FieldList* fieldlist = structuretype->u.structure.field ;
 					if(fieldlist->tail != NULL){
 						fieldlist = fieldlist->tail ;
 					}
@@ -363,14 +371,14 @@ static int analyze_opttag(NODE * opt_tag_tag, enum nonterminal_enum tp){
 		if(tp == ExtDef && ctemp == terminal_name[SEMI-WHILE] ){
 			warning("unnamed struct that defines no instances", temp->parent->line);
 		}else if(tp == ExtDef && ctemp == nonterminal_name[ExtDecList] ){
-			pass_attr_null_opttag(temp,create_type_kind(STRUCTURE_TYPE,NULL));
+			pass_attr_null_opttag(temp,create_type_kind(STRUCTURE_TYPE,NULL,NULL));
 		}else if(tp == ExtDef && ctemp == nonterminal_name[FunDec]){
 			NODE* ttemp = temp->parent->child_head->next_sister->child_head ;//fun id
-			pass_attr_null_opttag(temp,create_type_kind(STRUCTURE_TYPE,NULL));
+			pass_attr_null_opttag(temp,create_type_kind(STRUCTURE_TYPE,NULL,NULL));
 		}else if(tp == Def && ctemp == nonterminal_name[DecList]){
-			pass_attr_null_opttag(temp,create_type_kind(STRUCTURE_TYPE,NULL));
+			pass_attr_null_opttag(temp,create_type_kind(STRUCTURE_TYPE,NULL,NULL));
 		}else if(tp == ParamDec && temp->name == nonterminal_name[VarDec]){
-			pass_attr_null_opttag(temp,create_type_kind(STRUCTURE_TYPE,NULL));
+			pass_attr_null_opttag(temp,create_type_kind(STRUCTURE_TYPE,NULL,NULL));
 		}else{
 			perror("unknown error : anonymous struct");
 			exit(EXIT_FAILURE);
@@ -378,21 +386,23 @@ static int analyze_opttag(NODE * opt_tag_tag, enum nonterminal_enum tp){
 	}else if(opt_tag_tag->child_head->name == terminal_name[ID-WHILE]){
 		NODE* temp = opt_tag_tag->parent->parent->next_sister ;//head->child_head->next_sister;//
 		const char * ctemp = temp->name ;
+		IDTEM * tid = opt_tag_tag->child_head->value.type_p ;
+		tid = tid->cur ;
 		if(tp == ExtDef && ctemp == terminal_name[SEMI-WHILE] ){
-			pass_attr_id_opttag(temp,create_type_kind(STRUCTURE_TYPE,NULL));
+			pass_attr_id_opttag(temp,create_type_kind(STRUCTURE_TYPE,NULL,tid->name));
 			addstruct(temp->parent->child_head->child_head->child_head->next_sister->child_head);
 		}else if(tp == ExtDef && ctemp == nonterminal_name[ExtDecList] ){
-			pass_attr_id_opttag(temp,create_type_kind(STRUCTURE_TYPE,NULL));
+			pass_attr_id_opttag(temp,create_type_kind(STRUCTURE_TYPE,NULL,tid->name));
 			addstruct(temp->parent->child_head->child_head->child_head->next_sister->child_head);
 		}else if(tp == ExtDef && ctemp == nonterminal_name[FunDec]){
 			NODE* ttemp = temp->parent->child_head->next_sister->child_head ;//fun id
-			pass_attr_id_opttag(temp,create_type_kind(STRUCTURE_TYPE,NULL));
+			pass_attr_id_opttag(temp,create_type_kind(STRUCTURE_TYPE,NULL,tid->name));
 			addstruct(temp->parent->child_head->child_head->child_head->next_sister->child_head);
 		}else if(tp == Def && ctemp == nonterminal_name[DecList]){
-			pass_attr_id_opttag(temp,create_type_kind(STRUCTURE_TYPE,NULL));
+			pass_attr_id_opttag(temp,create_type_kind(STRUCTURE_TYPE,NULL,tid->name));
 			/*ignore ID*/
 		}else if(tp == ParamDec && temp->name == nonterminal_name[VarDec]){
-			pass_attr_id_opttag(temp,create_type_kind(STRUCTURE_TYPE,NULL));
+			pass_attr_id_opttag(temp,create_type_kind(STRUCTURE_TYPE,NULL,tid->name));
 		}else{
 			perror("unknown error : anonymous struct");
 			exit(EXIT_FAILURE);
@@ -485,3 +495,265 @@ int error(const char * info , int type ,long int line){
 		}
 */
 
+static Type* analyze_exp(NODE* exp){
+/*child_head*/
+	{
+		NODE * temp = exp->child_head ;
+		if(temp->name == terminal_name[ID - WHILE]){
+			IDTEM* tid = temp->value.type_p ;
+			tid = tid->cur ;
+			temp->parent->attr = tid->u.t;//Exp get attr from ID
+			NODE* ntemp = temp->next_sister ;
+			if(ntemp == NULL){
+				if(tid->kind != VARIABLE_KIND)error("Undefined variable",1,temp->line);
+			}else if(ntemp->name == terminal_name[LP - WHILE]){
+				if(tid->kind != FUNCTION_KIND){
+					error("Undefined function",2,temp->line);
+				}else{
+					FieldList * arg = tid->u.funtype.varhead ;
+					NODE * temp = temp->next_sister->next_sister->child_head ;
+					analyze_args_exp(temp , arg);
+				}
+			}
+			return temp->parent->attr ;
+		}else if(temp->name == terminal_name[FLOAT - WHILE]){
+			return (temp->parent->attr = create_type_kind(BASIC_TYPE,float_type)) ;//Exp get attr from FLOAT 
+		}else if(temp->name == terminal_name[INT - WHILE]){
+			return (temp->parent->attr = create_type_kind(BASIC_TYPE,int_type)) ;//Exp get attr from INT
+		}else if(temp->name == terminal_name[MINUS - WHILE]){//int or float
+			Type * ttype = temp->parent->attr = temp->next_sister->attr ;//Exp get attr from  Exp after MINUS
+			if(ttype->kind == BASIC_TYPE){
+			}else {
+				error("illegal arithmetic operation",7,temp->line);
+			}
+			return ttype  ;
+		}else if(temp->name == terminal_name[LP - WHILE]){
+			return (temp->parent->attr = temp->next_sister->attr) ;//Exp get attr from Exp after LP
+		}else if(temp->name == terminal_name[NOT - WHILE]){// only int 
+			Type * ttype = temp->parent->attr = temp->next_sister->attr ;//Exp get attr from  Exp after MINUS
+			if(ttype->kind == BASIC_TYPE && ttype->u.basic == int_type){
+			}else {
+				error("illegal NOT logic operation",7,temp->line);
+			}
+			return ttype ;
+		}else if(temp->name == nonterminal_name[Exp]){
+			NODE* ntemp = temp->next_sister; 
+			if(ntemp->name == terminal_name[AND - WHILE] || ntemp->name == terminal_name[OR - WHILE]){//only int
+				Type * ttype1 = analyze_exp(temp) ;
+				Type * ttype2 = analyze_exp(ntemp->next_sister) ;
+				if(ttype1->kind == ttype2->kind && ttype1->kind == BASIC_TYPE && ttype1->u.basic == ttype2->u.basic && ttype1->u.basic == int_type){
+					return ttype1 ;
+				}else{
+					error("illegal logic operation ",7,ntemp->line);
+					return create_type_kind(BASIC_TYPE,int_type);
+				}
+			}else if(ntemp->name == terminal_name[PLUS - WHILE] ||
+				ntemp->name == terminal_name[MINUS - WHILE]||
+				ntemp->name == terminal_name[STAR - WHILE]||
+				ntemp->name == terminal_name[DIV - WHILE]  ){//int or float
+				Type * ttype1 = analyze_exp(temp) ;
+				Type * ttype2 = analyze_exp(ntemp->next_sister) ;
+				if(ttype1->kind == ttype2->kind && ttype1->kind == BASIC_TYPE && ttype1->u.basic == ttype2->u.basic){
+				}else {
+					error("illegal arithmetic operation" , 7 , ntemp->line);
+				}
+				return ttype1 ;
+			}else if(ntemp->name == terminal_name[RELOP - WHILE]){//int or float
+				Type * ttype1 = analyze_exp(temp) ;
+				Type * ttype2 = analyze_exp(ntemp->next_sister) ;
+				if(ttype1->kind == ttype2->kind && ttype1->kind == BASIC_TYPE && ttype1->u.basic == ttype2->u.basic){
+				}else {
+					error("illegal relation operation" , 7 , ntemp->line);
+				}
+				return create_type_kind(BASIC_TYPE,int_type);
+			}else if(ntemp->name == terminal_name[LB - WHILE]){
+				Type * ttype1 = analyze_exp(temp) ;
+				Type * ttype2 = analyze_exp(ntemp->next_sister) ;
+				if(ttype2->kind == BASIC_TYPE && ttype2->u.basic == int_type){
+				}else{
+					error("noninteger in bracket",12,ntemp->next_sister->line);
+				}
+				if(ttype1->kind == ARRAY_TYPE){
+					return (temp->parent->attr = ttype1->u.array.elem );
+				}else {
+					error("\'[\' after a nonarray",10,ntemp->line);
+					return create_type();
+				}
+			}else if(ntemp->name == terminal_name[ASSIGNOP - WHILE]){
+				Type * ttype1 = analyze_exp(temp) ;
+				Type * ttype2 = analyze_exp(ntemp->next_sister) ;
+				if(temp->child_head->name == terminal_name[ID - WHILE] && temp->child_head->next_sister == NULL){
+				}else if(temp->child_head->name == nonterminal_name[Exp] && (
+					temp->child_head->next_sister->name == terminal_name[LB - WHILE] || 
+					temp->child_head->next_sister->name == terminal_name[DOT - WHILE] )){// temp->child_head->next_sister may not be null pointer
+				}else{
+					error("lvalue expression expected",6,ntemp->line);
+				}
+				return ttype2 ;
+				if(ttype1->kind == ttype2->kind && ttype1->kind == BASIC_TYPE && ttype1->u.basic == ttype2->u.basic){
+				}else{
+					error("unmatched type",5,ntemp->line);
+				}
+				if(ttype1->kind == ttype2->kind && ttype1->kind == STRUCTURE_TYPE && ttype1->u.structure.name == ttype2->u.structure.name){
+				}else {
+					error("unmatched type",5,ntemp->line);
+				}
+				return ttype1 ;
+			}else if(ntemp->name == terminal_name[DOT - WHILE]){
+				Type * ttype1 = analyze_exp(temp) ;
+				IDTEM * tid = ntemp->next_sister->value.type_p ;
+				tid = tid->cur ;
+				const char * ctemp = tid->name ;
+				if(ttype1->kind == STRUCTURE_KIND){
+					FieldList * field = ttype1->u.structure.field;
+					while(field){
+						if(strcmp(field->name,ctemp) == 0){
+							break;
+						}
+						field = field->tail ;
+					}
+					if(field == NULL){
+						error("undefined field" , 14, ntemp->next_sister->line);
+						return create_type();
+					}else{
+						return (temp->parent->attr = field->type);
+					}
+				}else{
+					error("not a structure before \'.\'",13,ntemp->line);
+					return create_type();
+				}
+				
+			}
+		}
+	}
+	return NULL;
+}
+
+#define ARRAY_DIM_UNMATCH 1
+#define BASIC_STRUCT_UNMATCH 2
+#define INT_FLOAT_UNMATCH 3
+#define STRUCT_NAME_UNMATCH 4
+
+static int analyze_args_exp(NODE* exp , FieldList * arg){
+	int errno = 0;
+	while(arg != NULL){
+		if(exp != NULL && exp->name == nonterminal_name[Exp]){
+			Type* ttype ;
+			ttype = exp->attr ;
+			if(ttype->kind != arg->type->kind){
+				error("unmatched argument type",9,exp->line);
+				errno = 1;
+			}else{
+				if(ttype->kind == BASIC_TYPE){
+					if(ttype->u.basic != ttype->u.basic){
+						error("unmatched argument type:one is INT the other is FLOAT",9,exp->line);
+						errno = 1 ;
+					}
+				}else if(ttype->kind == ARRAY_TYPE){
+					errno = error_argument_array_struct(cmp_array(arg->type,ttype),exp->line) ;
+				}else if(ttype->kind == STRUCTURE_TYPE){
+					errno = error_argument_array_struct(cmp_array(arg->type,ttype),exp->line) ;
+				}
+			}
+		}else{
+			error("too few arguments",9,exp->line);
+			errno = 1;
+			break ;
+		}
+		if(arg = arg->tail ) {
+			if((exp = exp->next_sister) && (exp = exp->next_sister) && (exp = exp->child_head)){
+				continue ;
+			}
+			exp = NULL ;
+		}
+	}
+	if(exp = exp->next_sister)if(exp = exp->next_sister)if(exp = exp->child_head){
+		error("too many arguments",9,exp->line);
+	}
+	return errno ;
+}
+static int error_argument_array_struct(int err,int line){
+	int errno ;
+	switch(err){
+		case ARRAY_DIM_UNMATCH:
+		error("unmatched argument type:array dimension unmatched",9,line);
+		errno = 1;
+		break; 
+
+		case BASIC_STRUCT_UNMATCH:
+		error("unmatched argument type:basic array with struct array",9,line);
+		errno = 1;
+		break; 
+
+		case INT_FLOAT_UNMATCH:
+		error("unmatched argument type:int array with float array",9,line);
+		errno = 1;
+		break; 
+
+		case STRUCT_NAME_UNMATCH:
+		error("unmatched argument type:different struct",9,line);
+		errno = 1;
+		break; 
+		
+		default:
+		errno = 0 ;
+		break ;
+	}
+	return errno ;
+}
+static int cmp_array(Type * arr1 , Type * arr2){
+	int dim1 = 0 ,dim2 = 0;
+	while(arr1->kind == ARRAY_TYPE){
+		dim1 ++ ;
+		arr1 = arr1->u.array.elem ;
+	}
+	while(arr2->kind == ARRAY_TYPE){
+		dim2 ++ ;
+		arr2 = arr2->u.array.elem ;
+	}
+	if(dim1 != dim2){
+		return ARRAY_DIM_UNMATCH;
+	}
+	if(arr1->kind == arr1->kind){
+	switch(arr1->kind){
+		case BASIC_TYPE:
+		if(arr1->u.basic != arr2->u.basic){
+			return INT_FLOAT_UNMATCH;
+		}
+		break ;
+
+		case STRUCTURE_TYPE:
+		return cmp_structure_name(arr1 , arr2);
+		break ;
+
+		default:
+		break ;
+	}
+	}else{
+		return BASIC_STRUCT_UNMATCH ;
+	}
+	return 0 ;
+}
+static int cmp_structure_name(Type* stt1, Type* stt2){
+	if(strcmp(stt1->u.structure.name,stt2->u.structure.name) == 0){
+	}else{
+		return STRUCT_NAME_UNMATCH;
+	}
+	return 0;
+}
+static int cmp_structure(Type* stt1, Type* stt2){
+	FieldList * stf1 = stt1->u.structure.field ;
+	FieldList * stf2 = stt2->u.structure.field ;
+	return 0;
+}
+/*
+static int illope(Type* ttype){
+	if(ttype->u.basic != error_type){
+		error("illegal operation",7,temp->line);
+		ttype->kind = BASIC_TYPE ;
+		ttype->u.basic = error_type ;
+		return 1 ;
+	}
+	return 0 ;
+}
+*/

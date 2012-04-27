@@ -150,7 +150,7 @@ Exp:	  ID			{$$=cp_node(nonterminal_name[Exp],$1) ;				}
 	| ID LP RP		{$$=csp_node(nonterminal_name[Exp],$1,$2,$3,NULL);		}
 	| Exp DOT ID		{$$=csp_node(nonterminal_name[Exp],$1,$2,$3,NULL);		}
 	| ID LP Args RP		{$$=csp_node(nonterminal_name[Exp],$1,$2,$3,$4,NULL);		}
-	| error RP		{yyerror("\n");yyerrok;				}
+	| error RP		{yyerror("\n");yyerrok;						}
 	| error RB		{
 				yyerror(": unknown stuff before \"]\"\n");
 				yyerrok;
