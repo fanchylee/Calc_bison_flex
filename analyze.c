@@ -30,6 +30,7 @@ static int analyze_args_exp(NODE* exp , FieldList * arg);
 static int cmp_array(Type * arr1 , Type * arr2);
 static int cmp_structure_name(Type* stt1, Type* stt2);
 static int error_argument_array_struct(int err,int line);
+static int pass_attr_for_declist(NODE * declist);
 
 int analyze(NODE* head){
 	const char * ctemp ;
@@ -159,19 +160,19 @@ static int analyze_vardec(NODE* head){
 		head->attr = create_type_kind(ARRAY_TYPE,head->parent->attr,size);
 		kind = VARIABLE_KIND;
 	}else if(temp->name == nonterminal_name[Dec]){
+		NODE * tmp = temp;
 		head->attr = head->parent->attr ;
-		while((temp=temp->parent)->name == nonterminal_name[DecList]){}
-		temp = temp->parent ;//
-		while((temp=temp->parent)->name == nonterminal_name[DefList]){}
-		if(temp->name == nonterminal_name[StructSpecifier]){
+		while((tmp=tmp->parent)->name == nonterminal_name[DecList]){}
+		while((tmp=tmp->parent)->name == nonterminal_name[DefList]){}
+		if(tmp->name == nonterminal_name[StructSpecifier]){
 			Type* structuretype ;
 			kind = STRUCTUREFIELD_KIND;
-			structuretype =  temp->attr ;//get structure type from StructSpecifier
+			structuretype =  tmp->attr ;//get structure type from StructSpecifier
 			if(head->child_head->name == terminal_name[ID - WHILE]){
-				NODE* temp = head->child_head;
-				temp->attr = structuretype ;//ID attr get structure type from StructSpecifier
+				NODE* tmp = head->child_head;
+				tmp->attr = structuretype ;//ID attr get structure type from StructSpecifier
 			}
-		}else if(temp->name == nonterminal_name[CompSt]){
+		}else if(tmp->name == nonterminal_name[CompSt]){
 			kind = VARIABLE_KIND;
 		}else {
 			perror("unknown error :impossible in analyze_vardec");
@@ -470,7 +471,7 @@ static int process_def(NODE * temp, enum nonterminal_enum tp ){
 		temp->child_head->attr = temp->attr = temp->previous_sister->attr ; //FunDec and ID get attr from specifier
 		addfunc(temp->child_head);//the function ID node
 	}else if(tp == Def && temp->name == nonterminal_name[DecList]){
-		temp->child_head->attr = temp->parent->attr = temp->attr = temp->previous_sister->attr ;//DecList and Def and Dec get attr from apecifier
+		pass_attr_for_declist(temp);
 	}else if(tp == ParamDec && temp->name == nonterminal_name[VarDec]){
 		temp->parent->attr = temp->attr = temp->previous_sister->attr ;//ParamDec and VarDec get attr from Specifier
 		temp->value.type_p = temp->parent->parent->value.type_p ;//VarDec get value from varlist 
@@ -805,6 +806,19 @@ static int cmp_structure_name(Type* stt1, Type* stt2){
 static int cmp_structure(Type* stt1, Type* stt2){
 	FieldList * stf1 = stt1->u.structure.field ;
 	FieldList * stf2 = stt2->u.structure.field ;
+	return 0;
+}
+static int pass_attr_for_declist(NODE * declist){
+	NODE* temp = declist ;
+	NODE* tmp = temp->child_head ;//Dec
+	temp->child_head->attr = //Dec get attr from a pecifier
+	temp->parent->attr =//Def get attr from a pecifier
+	temp->attr = temp->previous_sister->attr ;//DecList  get attr from a pecifier
+	while((tmp=tmp->next_sister) && (tmp = tmp->next_sister) &&(tmp->name == nonterminal_name[DecList])){
+		tmp->child_head->attr = ////Dec get attr from DecList
+		tmp->attr = temp->attr ;//DecList  get attr from last DecList
+		tmp=tmp->child_head;
+	}
 	return 0;
 }
 /*

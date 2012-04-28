@@ -1,21 +1,21 @@
 float iii;
 int xx;
 struct xxxxx{int ii;struct{int ii;float f2;}i2;} dxxx;
+struct xxxxx{} ;
 float main(){
 /*
 
 ;lajfs
 */
 //;afjsdlajfls;kdfasd;jlafj;sdl
-	int a[10][2];
-	int i = 0 ,j,k=3,d;
+	int i = 0 ,j,k=3,d,a[10][2];
 	struct ii{int i;}iiiii  ;
 	struct xxxxx xxx;
 	float f1 = 1.5 ;
 	
-	a[5][2.5] = 1;
+	a[5] = 1;
 	if(a[1][2] == 0){
-		i = xxx.i;
+		i.dd = xxx.i;
 		i ;
 	}
 	else{
