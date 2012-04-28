@@ -77,7 +77,9 @@ int analyze(NODE* head){
 	}else if(ctemp == nonterminal_name[VarList]){
 		printf("%s (%ld)\n",head->name,head->line);
 		analyze_varlist(head);
-	}else {
+	}else if(ctemp == terminal_name[RETURN - WHILE]){
+		printf("%s (%ld)\n",head->name,head->line);
+	}else{
 		printf("%s (%ld)\n",head->name,head->line);
 	}
 	return 0;
@@ -497,57 +499,66 @@ int error(const char * info , int type ,long int line){
 
 static Type* analyze_exp(NODE* exp){
 /*child_head*/
-	{
+	if(exp->attr == NULL){
 		NODE * temp = exp->child_head ;
 		if(temp->name == terminal_name[ID - WHILE]){
-			IDTEM* tid = temp->value.type_p ;
-			tid = tid->cur ;
-			temp->parent->attr = tid->u.t;//Exp get attr from ID
 			NODE* ntemp = temp->next_sister ;
+			IDTEM* tid = temp->value.type_p ;
+			temp->parent->attr = tid->u.t;//Exp get attr from ID
+			tid = tid->cur;
 			if(ntemp == NULL){
-				if(tid->kind != VARIABLE_KIND)error("Undefined variable",1,temp->line);
+				if(tid->kind != VARIABLE_KIND){
+					error("Undefined variable",1,temp->line);
+					temp->parent->attr = create_type();
+				}
 			}else if(ntemp->name == terminal_name[LP - WHILE]){
-				if(tid->kind != FUNCTION_KIND){
+				if(tid->kind == UNSPECIFIED ){
 					error("Undefined function",2,temp->line);
-				}else{
+					temp->parent->attr = create_type();
+				}else if(tid->kind == FUNCTION_KIND){
 					FieldList * arg = tid->u.funtype.varhead ;
 					NODE * temp = temp->next_sister->next_sister->child_head ;
-					analyze_args_exp(temp , arg);
+					analyze_args_exp(temp , arg) ;
+				}else if(tid->kind == STRUCTURE_KIND){
+					error("not a function before \'(\':it\'s a struct name",11,ntemp->line);
+					temp->parent->attr = create_type();
+				}else{
+					error("not a function before \'(\':it\'s a variable",11,ntemp->line);
+					temp->parent->attr = create_type();
 				}
 			}
-			return temp->parent->attr ;
 		}else if(temp->name == terminal_name[FLOAT - WHILE]){
-			return (temp->parent->attr = create_type_kind(BASIC_TYPE,float_type)) ;//Exp get attr from FLOAT 
+			(temp->parent->attr = create_type_kind(BASIC_TYPE,float_type)) ;//Exp get attr from FLOAT 
 		}else if(temp->name == terminal_name[INT - WHILE]){
-			return (temp->parent->attr = create_type_kind(BASIC_TYPE,int_type)) ;//Exp get attr from INT
+			(temp->parent->attr = create_type_kind(BASIC_TYPE,int_type)) ;//Exp get attr from INT
 		}else if(temp->name == terminal_name[MINUS - WHILE]){//int or float
 			Type * ttype = temp->parent->attr = temp->next_sister->attr ;//Exp get attr from  Exp after MINUS
 			if(ttype->kind == BASIC_TYPE){
 			}else {
 				error("illegal arithmetic operation",7,temp->line);
 			}
-			return ttype  ;
+			(temp->parent->attr = ttype) ;
 		}else if(temp->name == terminal_name[LP - WHILE]){
-			return (temp->parent->attr = temp->next_sister->attr) ;//Exp get attr from Exp after LP
+			(temp->parent->attr = temp->next_sister->attr) ;//Exp get attr from Exp after LP
 		}else if(temp->name == terminal_name[NOT - WHILE]){// only int 
 			Type * ttype = temp->parent->attr = temp->next_sister->attr ;//Exp get attr from  Exp after MINUS
 			if(ttype->kind == BASIC_TYPE && ttype->u.basic == int_type){
 			}else {
 				error("illegal NOT logic operation",7,temp->line);
 			}
-			return ttype ;
+			(temp->parent->attr = ttype) ;
 		}else if(temp->name == nonterminal_name[Exp]){
 			NODE* ntemp = temp->next_sister; 
 			if(ntemp->name == terminal_name[AND - WHILE] || ntemp->name == terminal_name[OR - WHILE]){//only int
 				Type * ttype1 = analyze_exp(temp) ;
 				Type * ttype2 = analyze_exp(ntemp->next_sister) ;
 				if(ttype1->kind == ttype2->kind && ttype1->kind == BASIC_TYPE && ttype1->u.basic == ttype2->u.basic && ttype1->u.basic == int_type){
-					return ttype1 ;
+					(temp->parent->attr = ttype1) ;
 				}else{
 					error("illegal logic operation ",7,ntemp->line);
-					return create_type_kind(BASIC_TYPE,int_type);
+					(temp->parent->attr = create_type_kind(BASIC_TYPE,int_type));
 				}
-			}else if(ntemp->name == terminal_name[PLUS - WHILE] ||
+			}else if(ntemp->name == terminal_name[PLUS - WHILE]||
 				ntemp->name == terminal_name[MINUS - WHILE]||
 				ntemp->name == terminal_name[STAR - WHILE]||
 				ntemp->name == terminal_name[DIV - WHILE]  ){//int or float
@@ -557,15 +568,15 @@ static Type* analyze_exp(NODE* exp){
 				}else {
 					error("illegal arithmetic operation" , 7 , ntemp->line);
 				}
-				return ttype1 ;
+				(temp->parent->attr = ttype1) ;
 			}else if(ntemp->name == terminal_name[RELOP - WHILE]){//int or float
 				Type * ttype1 = analyze_exp(temp) ;
 				Type * ttype2 = analyze_exp(ntemp->next_sister) ;
 				if(ttype1->kind == ttype2->kind && ttype1->kind == BASIC_TYPE && ttype1->u.basic == ttype2->u.basic){
 				}else {
-					error("illegal relation operation" , 7 , ntemp->line);
+					error("illegal relation operation",7,ntemp->line);
 				}
-				return create_type_kind(BASIC_TYPE,int_type);
+				(temp->parent->attr = create_type_kind(BASIC_TYPE,int_type));
 			}else if(ntemp->name == terminal_name[LB - WHILE]){
 				Type * ttype1 = analyze_exp(temp) ;
 				Type * ttype2 = analyze_exp(ntemp->next_sister) ;
@@ -574,37 +585,35 @@ static Type* analyze_exp(NODE* exp){
 					error("noninteger in bracket",12,ntemp->next_sister->line);
 				}
 				if(ttype1->kind == ARRAY_TYPE){
-					return (temp->parent->attr = ttype1->u.array.elem );
+					(temp->parent->attr = ttype1->u.array.elem );
 				}else {
-					error("\'[\' after a nonarray",10,ntemp->line);
-					return create_type();
+					error("not an array before \'[\'",10,ntemp->line);
+					(temp->parent->attr = create_type());
 				}
 			}else if(ntemp->name == terminal_name[ASSIGNOP - WHILE]){
 				Type * ttype1 = analyze_exp(temp) ;
 				Type * ttype2 = analyze_exp(ntemp->next_sister) ;
-				if(temp->child_head->name == terminal_name[ID - WHILE] && temp->child_head->next_sister == NULL){
-				}else if(temp->child_head->name == nonterminal_name[Exp] && (
+				if((temp->child_head->name == terminal_name[ID - WHILE] && temp->child_head->next_sister == NULL)||
+					(temp->child_head->name == nonterminal_name[Exp] && (
 					temp->child_head->next_sister->name == terminal_name[LB - WHILE] || 
-					temp->child_head->next_sister->name == terminal_name[DOT - WHILE] )){// temp->child_head->next_sister may not be null pointer
+					temp->child_head->next_sister->name == terminal_name[DOT - WHILE] ))){// temp->child_head->next_sister may not be null pointer
+					if(ttype1->kind == ttype2->kind && ttype1->kind == BASIC_TYPE && ttype1->u.basic == ttype2->u.basic){	
+                                        }else if(ttype1->kind == ttype2->kind && ttype1->kind == STRUCTURE_TYPE && ttype1->u.structure.name == ttype2->u.structure.name){
+                                        }else {
+						if(ttype1->kind != UNSPECIFIED && ttype2->kind != UNSPECIFIED)
+                                        		error("unmatched type",5,ntemp->line);
+                                        }
+					(temp->parent->attr = ttype1) ;
 				}else{
 					error("lvalue expression expected",6,ntemp->line);
+					(temp->parent->attr = ttype2) ;
 				}
-				return ttype2 ;
-				if(ttype1->kind == ttype2->kind && ttype1->kind == BASIC_TYPE && ttype1->u.basic == ttype2->u.basic){
-				}else{
-					error("unmatched type",5,ntemp->line);
-				}
-				if(ttype1->kind == ttype2->kind && ttype1->kind == STRUCTURE_TYPE && ttype1->u.structure.name == ttype2->u.structure.name){
-				}else {
-					error("unmatched type",5,ntemp->line);
-				}
-				return ttype1 ;
 			}else if(ntemp->name == terminal_name[DOT - WHILE]){
 				Type * ttype1 = analyze_exp(temp) ;
 				IDTEM * tid = ntemp->next_sister->value.type_p ;
 				tid = tid->cur ;
 				const char * ctemp = tid->name ;
-				if(ttype1->kind == STRUCTURE_KIND){
+				if(ttype1->kind == STRUCTURE_TYPE){
 					FieldList * field = ttype1->u.structure.field;
 					while(field){
 						if(strcmp(field->name,ctemp) == 0){
@@ -614,19 +623,35 @@ static Type* analyze_exp(NODE* exp){
 					}
 					if(field == NULL){
 						error("undefined field" , 14, ntemp->next_sister->line);
-						return create_type();
+						(temp->parent->attr = create_type());
 					}else{
-						return (temp->parent->attr = field->type);
+						(temp->parent->attr = field->type);
 					}
 				}else{
 					error("not a structure before \'.\'",13,ntemp->line);
-					return create_type();
+					(temp->parent->attr = create_type());
 				}
 				
 			}
 		}
 	}
-	return NULL;
+	{
+		NODE * temp = exp->previous_sister ;
+		if(temp && temp->name == terminal_name[RETURN - WHILE]){
+			NODE * tmp = temp;
+			Type * ttype1 ;
+			Type * ttype2 = exp->attr ;
+			while((tmp = tmp->parent)->name != nonterminal_name[CompSt]) {}//tmp->name ==CompSt
+			tmp = tmp->previous_sister ;//tmp->name == FunDec
+			ttype1 = tmp->attr ;
+			if(ttype1->kind == ttype2->kind && ttype1->kind == BASIC_TYPE && ttype1->u.basic == ttype2->u.basic){
+			}else if(ttype1->kind == ttype2->kind && ttype1->kind == STRUCTURE_TYPE && cmp_structure_name(ttype1,ttype2)==0){
+			}else {
+				error("function return unmatched type",8,temp->line);
+			}
+		}
+	}
+	return exp->attr;
 }
 
 #define ARRAY_DIM_UNMATCH 1

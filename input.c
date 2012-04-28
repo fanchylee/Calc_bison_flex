@@ -1,20 +1,20 @@
 float iii;
 int xx;
-struct xxxxx{int i;} dxxx;
-float main() {
+struct xxxxx{int ii;} dxxx;
+float main(){
 /*
 
 ;lajfs
 */
 //;afjsdlajfls;kdfasd;jlafj;sdl
-	float a[10][2];
+	int a[10][2];
 	int i = 0 ,j,k=3,d;
 	struct ii{int i;}iiiii  ;
 	struct xxxxx xxx;
 	
 	a[5][3] = 1.5;
-	if( a[1][2] == 0){
-		i = 10;
+	if(a[1.5][2] == 0){
+		i = xxx.i;
 		i ;
 	}
 	else{
@@ -25,6 +25,7 @@ float main() {
 	}
 }
 struct xxxxx afa(float a){
-	struct xxxxx xxx;
+	int xxx;
 	return xxx ;
 }
+
