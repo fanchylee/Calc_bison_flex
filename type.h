@@ -18,9 +18,9 @@ struct Type_
 };
 struct FieldList_
 {
-    char* name;           // field name
-    Type* type;            // field type 
-    FieldList* tail;       // next field
+	const char* name;           // field name
+	Type* type;            // field type 
+	FieldList* tail;       // next field
 };
 
 extern Type* create_type();

@@ -183,7 +183,9 @@ int main (void){
 	tab[0]='\0';
 	if(noerror ){
 		traverse_node_tree((NODE*)head);
+#ifndef SUBMIT
 		traverse_item_list(idtable_head);
+#endif
 	}
 
 	//free_list(idtable_head) ;
@@ -312,7 +314,9 @@ static int opt_tag_id(NODE* node){
 int traverse_node_tree(NODE* head ){
 	char * temp;
 	if(head->line==0)goto recursive;
+#ifndef SUBMIT
 	fputs(tab,stdout);
+#endif
 	analyze(head);
 recursive:
 	if(head->child_head != NULL){

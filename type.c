@@ -4,10 +4,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include "const.h"
+#include "global.h"
 
 #define BASIC_TYPE 1 
 #define ARRAY_TYPE 2 
 #define STRUCTURE_TYPE 3 
+
+#ifndef __TYPE_H__
 
 typedef struct Type_ Type;
 typedef struct FieldList_ FieldList;
@@ -17,12 +20,11 @@ struct Type_{
 };
 struct FieldList_
 {
-    char* name;           // field name
+    const char* name;           // field name
     Type* type;            // field type 
     FieldList* tail;       // next field
 };
-
-
+#endif
 
 Type* create_type(){
 	Type* tp = NULL;
@@ -45,7 +47,9 @@ Type* create_type_kind(int type_kind,...){
 		case ARRAY_TYPE:
 		tp->u.array.elem = va_arg(ap,Type* );
 		tp->u.array.size = va_arg(ap,int);
+#ifndef SUBMIT
 		printf("size:%d\n",tp->u.array.size );
+#endif
 		break;
 
 		case STRUCTURE_TYPE:

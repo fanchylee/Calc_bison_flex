@@ -35,52 +35,84 @@ int analyze(NODE* head){
 	const char * ctemp ;
 	int depth ;
 	if((ctemp = head->name) == terminal_name[ID-WHILE]){
+#ifndef SUBMIT
 		printf("%s: %s\n",head->name , ((IDTEM*)(head->value).type_p)->name);
+#endif
 	}else if(ctemp == terminal_name[TYPE-WHILE]){
+#ifndef SUBMIT
 		printf("%s: %s\n",head->name,(char *)(head->value).type_p) ;
+#endif
 	}else if(ctemp == terminal_name[FLOAT-WHILE]){
+#ifndef SUBMIT
 		printf("%s: %f\n",head->name,(head->value).type_float) ;
+#endif
 	}else if(ctemp == terminal_name[INT-WHILE]){
+#ifndef SUBMIT
 		printf("%s: %d\n",head->name,(head->value).type_int);
+#endif
 	}else if(ctemp == nonterminal_name[Exp]){
+#ifndef SUBMIT
 		printf("%s (%ld)\n",head->name,head->line);
+#endif
 		analyze_exp(head);
 	}else if(ctemp == terminal_name[LC - WHILE]){
+#ifndef SUBMIT
 		printf("%s (%ld)\n",head->name,head->line);
+#endif
 		if(head->parent->previous_sister != NULL){
 		}else{
 			allowoverlap(idtable_head);
 		}
 	}else if(ctemp == terminal_name[RC - WHILE]){
+#ifndef SUBMIT
 		printf("%s (%ld)\n",head->name,head->line);
+#endif
 		disallowoverlap(idtable_head);
 	}else if(ctemp == nonterminal_name[ExtDef]){
+#ifndef SUBMIT
 		printf("%s (%ld)\n",head->name,head->line);
+#endif
 		analyze_def(head,ExtDef);
 	}else if(ctemp == nonterminal_name[Def]){
+#ifndef SUBMIT
 		printf("%s (%ld)\n",head->name,head->line);
+#endif
 		analyze_def(head,Def);
 	}else if(ctemp == nonterminal_name[DecList] || ctemp == nonterminal_name[ExtDecList]){
+#ifndef SUBMIT
 		printf("%s (%ld)\n",head->name,head->line);
+#endif
 		analyze_dec_extdeclist(head);
 	}else if(ctemp == terminal_name[LP - WHILE]){
+#ifndef SUBMIT
 		printf("%s (%ld)\n",head->name,head->line);
+#endif
 		if(head->parent->name == nonterminal_name[FunDec]){
 			allowoverlap(idtable_head);
 		}
 	}else if(ctemp == nonterminal_name[VarDec]){
+#ifndef SUBMIT
 		printf("%s (%ld)\n",head->name,head->line);
+#endif
 		analyze_vardec(head);
 	}else if(ctemp == nonterminal_name[ParamDec]){
+#ifndef SUBMIT
 		printf("%s (%ld)\n",head->name,head->line);
+#endif
 		analyze_def(head,ParamDec);
 	}else if(ctemp == nonterminal_name[VarList]){
+#ifndef SUBMIT
 		printf("%s (%ld)\n",head->name,head->line);
+#endif
 		analyze_varlist(head);
 	}else if(ctemp == terminal_name[RETURN - WHILE]){
+#ifndef SUBMIT
 		printf("%s (%ld)\n",head->name,head->line);
+#endif
 	}else{
+#ifndef SUBMIT
 		printf("%s (%ld)\n",head->name,head->line);
+#endif
 	}
 	return 0;
 }
@@ -118,8 +150,8 @@ static int analyze_dec_extdeclist(NODE* head){
 	return 0 ;
 }
 static int analyze_vardec(NODE* head){
-	NODE* temp;
-	IDTEM* tid ;
+	NODE* temp = NULL;
+	IDTEM* tid =NULL;
 	int kind ;
 	if((temp = head->parent)->name == nonterminal_name[VarDec]){
 		int size ;
@@ -153,12 +185,13 @@ static int analyze_vardec(NODE* head){
 		head->attr = head->parent->attr ;//
 		kind = VARIABLE_KIND ;
 		if(funid->kind == FUNCTION_KIND){//determine the varlist type
+			NODE * tmp = head ;//tmp is the fisrt vardec
+			while(tmp->child_head->name == nonterminal_name[VarDec]){tmp=tmp->child_head;}//get the ID node
 			if(funid->u.funtype.varhead == NULL){
 				funid->u.funtype.varhead = malloc(sizeof(FieldList));
 				memset(funid->u.funtype.varhead,0,sizeof(FieldList));
-				funid->u.funtype.varhead->type = tid->u.structurefieldtype.t ;
-				funid->u.funtype.varhead->name = malloc(strlen(funid->name)+1) ;
-				strcpy(funid->u.funtype.varhead->name,tid->name);
+				funid->u.funtype.varhead->type = head->attr ;
+				funid->u.funtype.varhead->name = tmp->name;
 			}else{
 				FieldList* fieldlist = funid->u.funtype.varhead ;
 				if(fieldlist->tail != NULL){
@@ -166,9 +199,8 @@ static int analyze_vardec(NODE* head){
 				}
 				fieldlist->tail = malloc(sizeof(FieldList));
 				memset(fieldlist->tail,0,sizeof(FieldList));
-				fieldlist->tail->type = tid->u.structurefieldtype.t ;
-				fieldlist->tail->name = malloc(strlen(tid->name)+1) ;
-				strcpy(fieldlist->tail->name,tid->name);
+				fieldlist->tail->type = head->attr ;
+				fieldlist->tail->name = tmp->name ;
 			}
 		}
 	}
@@ -258,8 +290,7 @@ static addvar(int kind,NODE* idnode){
 					structuretype->u.structure.field = malloc(sizeof(FieldList));
 					memset(structuretype->u.structure.field,0,sizeof(FieldList));
 					structuretype->u.structure.field->type = tid->u.structurefieldtype.t ;
-					structuretype->u.structure.field->name = malloc(strlen(tid->name)+1) ;
-					strcpy(structuretype->u.structure.field->name,tid->name);
+					structuretype->u.structure.field->name = tid->name ;
 				}else{
 					FieldList* fieldlist = structuretype->u.structure.field ;
 					if(fieldlist->tail != NULL){
@@ -268,8 +299,7 @@ static addvar(int kind,NODE* idnode){
 					fieldlist->tail = malloc(sizeof(FieldList));
 					memset(fieldlist->tail,0,sizeof(FieldList));
 					fieldlist->tail->type = tid->u.structurefieldtype.t ;
-					fieldlist->tail->name = malloc(strlen(tid->name)+1) ;
-					strcpy(fieldlist->tail->name,tid->name);
+					fieldlist->tail->name = tid->name ;
 				}
 			}
 			break ;
@@ -358,7 +388,7 @@ static int analyze_tag(NODE* IDnode,enum nonterminal_enum tp){
 	IDTEM * tid = IDnode->value.type_p ;
 	tid = tid->cur ;
 	if(tid->kind != STRUCTURE_KIND){
-		error("undefined struct",17,IDnode->line);
+		error("undefined struct to define a variable",17,IDnode->line);
 		return 1;
 	}else{
 		Type* structuretype = tid->u.structuretype.t ;
@@ -504,12 +534,17 @@ static Type* analyze_exp(NODE* exp){
 		if(temp->name == terminal_name[ID - WHILE]){
 			NODE* ntemp = temp->next_sister ;
 			IDTEM* tid = temp->value.type_p ;
-			temp->parent->attr = tid->u.t;//Exp get attr from ID
 			tid = tid->cur;
+			temp->parent->attr = tid->u.t;//Exp get attr from ID
+			temp->value.type_p = tid ;
 			if(ntemp == NULL){
 				if(tid->kind != VARIABLE_KIND){
 					error("Undefined variable",1,temp->line);
 					temp->parent->attr = create_type();
+				}else{
+					if(temp->parent->attr){}else{
+						temp->parent->attr = create_type();
+					}
 				}
 			}else if(ntemp->name == terminal_name[LP - WHILE]){
 				if(tid->kind == UNSPECIFIED ){
@@ -517,8 +552,8 @@ static Type* analyze_exp(NODE* exp){
 					temp->parent->attr = create_type();
 				}else if(tid->kind == FUNCTION_KIND){
 					FieldList * arg = tid->u.funtype.varhead ;
-					NODE * temp = temp->next_sister->next_sister->child_head ;
-					analyze_args_exp(temp , arg) ;
+					NODE * tmp = temp->next_sister->next_sister ;
+					analyze_args_exp(tmp , arg) ;
 				}else if(tid->kind == STRUCTURE_KIND){
 					error("not a function before \'(\':it\'s a struct name",11,ntemp->line);
 					temp->parent->attr = create_type();
@@ -659,12 +694,13 @@ static Type* analyze_exp(NODE* exp){
 #define INT_FLOAT_UNMATCH 3
 #define STRUCT_NAME_UNMATCH 4
 
-static int analyze_args_exp(NODE* exp , FieldList * arg){
+static int analyze_args_exp(NODE* expp , FieldList * arg){
+	NODE* exp = expp->child_head;
 	int errno = 0;
 	while(arg != NULL){
 		if(exp != NULL && exp->name == nonterminal_name[Exp]){
 			Type* ttype ;
-			ttype = exp->attr ;
+			ttype = analyze_exp(exp) ;
 			if(ttype->kind != arg->type->kind){
 				error("unmatched argument type",9,exp->line);
 				errno = 1;
@@ -681,7 +717,7 @@ static int analyze_args_exp(NODE* exp , FieldList * arg){
 				}
 			}
 		}else{
-			error("too few arguments",9,exp->line);
+			error("too few arguments in \'(\' \')\'",9,expp->line);
 			errno = 1;
 			break ;
 		}
@@ -692,7 +728,7 @@ static int analyze_args_exp(NODE* exp , FieldList * arg){
 			exp = NULL ;
 		}
 	}
-	if(exp = exp->next_sister)if(exp = exp->next_sister)if(exp = exp->child_head){
+	if(exp && (exp = exp->next_sister)&&(exp = exp->next_sister)&&(exp = exp->child_head)){
 		error("too many arguments",9,exp->line);
 	}
 	return errno ;

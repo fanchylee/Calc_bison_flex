@@ -2,6 +2,10 @@
 #define __GLOBAL_H__
 
 #include <stddef.h>
+#include "type.h"
+#include "struct.h"
+//#define SUBMIT
+
 extern IDTEM* idtable_head   ;
 extern  NODE* node_head ;
 extern FILE *fpdebug ;
