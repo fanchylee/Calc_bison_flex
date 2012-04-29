@@ -250,7 +250,7 @@ static void disallowoverlap(IDTEM * head){
 }
 static addvar(int kind,NODE* idnode){
 	IDTEM* tid = ((IDTEM*)idnode->value.type_p)->cur ;
-	NODE* head = idnode->parent ;
+	NODE* head = idnode->parent ;//VarDec
 	switch(tid->overlap){
 		IDTEM* newid ;
 		case ALLOW:
@@ -402,7 +402,9 @@ static int analyze_opttag(NODE * opt_tag_tag, enum nonterminal_enum tp){
 		NODE* temp = opt_tag_tag->parent->parent->next_sister ;//head->child_head->next_sister;//
 		const char * ctemp = temp->name ;
 		if(tp == ExtDef && ctemp == terminal_name[SEMI-WHILE] ){
+#ifndef SUBMIT
 			warning("unnamed struct that defines no instances", temp->parent->line);
+#endif
 		}else if(tp == ExtDef && ctemp == nonterminal_name[ExtDecList] ){
 			pass_attr_null_opttag(temp,create_type_kind(STRUCTURE_TYPE,NULL,NULL));
 		}else if(tp == ExtDef && ctemp == nonterminal_name[FunDec]){
@@ -634,8 +636,8 @@ static Type* analyze_exp(NODE* exp){
 					temp->child_head->next_sister->name == terminal_name[LB - WHILE] || 
 					temp->child_head->next_sister->name == terminal_name[DOT - WHILE] ))){// temp->child_head->next_sister may not be null pointer
 					if(ttype1->kind == ttype2->kind && ttype1->kind == BASIC_TYPE && ttype1->u.basic == ttype2->u.basic){	
-                                        }else if(ttype1->kind == ttype2->kind && ttype1->kind == STRUCTURE_TYPE && ttype1->u.structure.name == ttype2->u.structure.name){
-                                        }else {
+					}else if(ttype1->kind == ttype2->kind && ttype1->kind == STRUCTURE_TYPE && ttype1->u.structure.name == ttype2->u.structure.name){
+					}else {
 						if(ttype1->kind != UNSPECIFIED && ttype2->kind != UNSPECIFIED)
                                         		error("unmatched type",5,ntemp->line);
                                         }
@@ -685,6 +687,19 @@ static Type* analyze_exp(NODE* exp){
 			}else {
 				error("function return unmatched type",8,temp->line);
 			}
+		}else if(temp && temp->name == terminal_name[ASSIGNOP - WHILE] 
+			&& temp->previous_sister && temp->previous_sister->name == nonterminal_name[VarDec]
+			&& temp->next_sister && temp->next_sister->name == nonterminal_name[Exp]){
+			NODE * tmp1 = temp->previous_sister ;
+			NODE * tmp2 = temp->next_sister ;
+			Type* ttype1 = tmp1->attr ;
+			Type* ttype2 = tmp2->attr ;
+			if(ttype1->kind == ttype2->kind && ttype1->kind == BASIC_TYPE && ttype1->u.basic == ttype2->u.basic){
+			}else if(ttype1->kind == ttype2->kind && ttype1->kind == STRUCTURE_TYPE && cmp_structure_name(ttype1,ttype2)==0){
+			}else {
+				error("unmatched type before and after \'=\'",5,temp->line);
+			}
+			
 		}
 	}
 	return exp->attr;
