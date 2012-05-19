@@ -11,6 +11,7 @@
 #include "const.h"
 #include "type.h"
 #include "analyze.h"
+#include "translate.h"
 
 extern int num_lines;
 extern int yylineno;
@@ -187,7 +188,8 @@ int main (int ac,char *av[]){
 	tab = (char *)malloc(1);
 	tab[0]='\0';
 	if(noerror ){
-		traverse_node_tree((NODE*)head);
+		traverse_node_tree((NODE*)head,analyze);
+		traverse_node_tree((NODE*)head,translate);
 #ifndef SUBMIT
 		traverse_item_list(idtable_head);
 #endif
@@ -217,7 +219,7 @@ NODE * cp_link(const char * name ,NODE * c) {
 	p_node->name= name ;
 	return (NODE *)p_node ;
 }
-NODE * csp_node(const char * name ,NODE * ch , ...) {
+NODE * csp_node(const char * name ,NODE * ch , ...){
 	NODE * p ;
 	va_list ap ;
 	NODE* temp ;
@@ -316,25 +318,25 @@ static int opt_tag_id(NODE* node){
 	}
 	return 0;
 }
-int traverse_node_tree(NODE* head ){
+int traverse_node_tree(NODE* head ,int (*action)(NODE*)){
 	char * temp;
 	if(head->line==0)goto recursive;
 #ifndef SUBMIT
 	fputs(tab,stdout);
 #endif
-	analyze(head);
+	(*action)(head);
 recursive:
 	if(head->child_head != NULL){
 		tab = realloc(tab,strlen(tab)+3);
 		strcat(tab,"  ");
-		traverse_node_tree(head->child_head);//here to recurse
+		traverse_node_tree(head->child_head,action);//here to recurse
 		temp = tab ;
 		tab=(char *)malloc(strlen(tab));
 		strcpy(tab,temp+2);
 		free(temp);
 	}
 	if(head->next_sister != NULL){
-		traverse_node_tree(head->next_sister);//here to recurse
+		traverse_node_tree(head->next_sister,action);//here to recurse
 	}
 	return 0;
 }

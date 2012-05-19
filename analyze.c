@@ -34,7 +34,6 @@ static int pass_attr_for_declist(NODE * declist);
 
 int analyze(NODE* head){
 	const char * ctemp ;
-	int depth ;
 	if((ctemp = head->name) == terminal_name[ID-WHILE]){
 #ifndef SUBMIT
 		printf("%s: %s\n",head->name , ((IDTEM*)(head->value).type_p)->name);

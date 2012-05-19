@@ -7,10 +7,11 @@
 #include "calc.yy.h"
 #include "global.h"
 #include "const.h"
+#include "irtreestruct.h"
 
 int num_chars = 0;
 extern FILE * fpdebug;
-extern char  noerror ;
+extern char  noerror;
 %}
 %option noyywrap
 %option yylineno
@@ -34,7 +35,7 @@ ml	\/\*{any}*\*\/
 {ws}		{}
 {l_cmt}		{}
 {ml}		{}
-if		{				
+if		{
 			yylval = value_create_node((MYVALUE)NULL,yylineno,terminal_name[IF          -WHILE]) ;
 			return(IF          );
 		}
@@ -82,37 +83,37 @@ else		{
 			return(OR          );
 		}
 "<"		{
-			yylval = value_create_node(itou(RELOP),yylineno,terminal_name[RELOP       -WHILE]);
+			yylval = value_create_node(itou(T_lt),yylineno,terminal_name[RELOP       -WHILE]);
 
 			return(RELOP       );
 		}
 "<="		{
 
-			yylval = value_create_node(itou(RELOP),yylineno,terminal_name[RELOP       -WHILE]);
+			yylval = value_create_node(itou(T_le),yylineno,terminal_name[RELOP       -WHILE]);
 			return(RELOP       );
 		}
 "!="		{		
 
-			yylval = value_create_node(itou(RELOP),yylineno,terminal_name[RELOP       -WHILE]);
+			yylval = value_create_node(itou(T_ne),yylineno,terminal_name[RELOP       -WHILE]);
 			return(RELOP       );
 		}
 "="		{
-			yylval = value_create_node(itou(RELOP),yylineno,terminal_name[ASSIGNOP    -WHILE]);
+			yylval = value_create_node(itou(ASSIGNOP - WHILE),yylineno,terminal_name[ASSIGNOP    -WHILE]);
 			return(ASSIGNOP    );
 		}
 "=="		{
 
-			yylval = value_create_node(itou(RELOP),yylineno,terminal_name[RELOP       -WHILE]);
+			yylval = value_create_node(itou(T_eq),yylineno,terminal_name[RELOP       -WHILE]);
 			return(RELOP       );
 		}
 ">"		{
 
-			yylval = value_create_node(itou(RELOP),yylineno,terminal_name[RELOP       -WHILE]);
+			yylval = value_create_node(itou(T_gt),yylineno,terminal_name[RELOP       -WHILE]);
 			return(RELOP       );
 		}
 ">="		{
 
-			yylval = value_create_node(itou(RELOP),yylineno,terminal_name[RELOP       -WHILE]);
+			yylval = value_create_node(itou(T_ge),yylineno,terminal_name[RELOP       -WHILE]);
 			return(RELOP       );
 		}
 ";"		{
@@ -148,19 +149,19 @@ else		{
 			return(RC          );
 		}
 "+"		{
-			yylval = value_create_node(itou(PLUS),yylineno,terminal_name[PLUS        -WHILE]);
+			yylval = value_create_node(itou(T_plus),yylineno,terminal_name[PLUS        -WHILE]);
 			return(PLUS        );
 		}
 "-"		{
-			yylval = value_create_node(itou(MINUS),yylineno,terminal_name[MINUS       -WHILE]);
+			yylval = value_create_node(itou(T_minus),yylineno,terminal_name[MINUS       -WHILE]);
 			return(MINUS       );
 		}
 "*"		{
-			yylval = value_create_node(itou(STAR),yylineno,terminal_name[STAR        -WHILE]);
+			yylval = value_create_node(itou(T_star),yylineno,terminal_name[STAR        -WHILE]);
 			return(STAR        );
 		}
 "/"		{
-			yylval = value_create_node(itou(DIV),yylineno,terminal_name[DIV         -WHILE]);
+			yylval = value_create_node(itou(T_div),yylineno,terminal_name[DIV         -WHILE]);
 			return(DIV         );
 		}
 "."		{
