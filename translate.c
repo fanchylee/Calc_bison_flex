@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "struct.h"
+#include "type.h"
 #include "irtreestruct.h"
 #define TEMPSIZE 12
 
@@ -12,17 +13,24 @@ static T_stm tr_cond(NODE* condexp);
 static T_relOp tr_relop(NODE* relop);
 static Temp_temp tr_id(NODE* id);
 static T_exp tr_condexp(NODE* exp);
+static T_stm tr_fundec(NODE* head);
+static T_stm tr_deflist(NODE* deflist);
+static T_exp tr_struct(NODE* structexp, NODE* fieldid) {
+
 
 int translate(NODE* head){
 	const char * ctemp ;
 	if((ctemp = head->name) == nonterminal_name[StmtList]){
 	}else if(ctemp == nonterminal_name[FunDec]){
-		NODE* temp = head->child_head ;
-		NODE* temp_compst = head->next_sister/*CompSt*///->child_head->next_sister->next_sister ;
-		T_Seq(T_Fun(((IDTEM*)temp->value.type_p)->name), tr_compst(temp_compst));
+		tr_fundec(head);
 	}
 }
-T_stm tr_stmt(NODE* stmt){
+static T_stm tr_fundec(NODE* head){
+	NODE* temp = head->child_head ;
+	NODE* temp_compst = head->next_sister/*CompSt*///->child_head->next_sister->next_sister ;
+	return T_Seq(T_Fun(((IDTEM*)temp->value.type_p)->name), tr_compst(temp_compst));
+}
+static T_stm tr_stmt(NODE* stmt){
 	if(stmt != NULL) {
 		return NULL ;
 	}else if(stmt->name == nonterminal_name[Stmt]){
@@ -81,20 +89,21 @@ T_stm tr_stmt(NODE* stmt){
 		}
 	}
 }
-T_stm tr_compst(NODE* compst){
-	NODE* stmtlist = compst->child_head->next_sister->next_sister ;//StmtList
+static T_stm tr_compst(NODE* compst){
+	NODE* deflist = compst->child_head->next_sister ;
+	NODE* stmtlist = deflist->next_sister ;//StmtList
 	return tr_stmtlist(stmtlist);
 }
-T_stm tr_stmtlist(NODE* stmtlist){
+static T_stm tr_stmtlist(NODE* stmtlist){
 	T_stm right ;
-	if(tr->child_head == NULL){
+	if(stmtlist->child_head == NULL){
 		right = NULL ;
 	}else{
-		right = tr_stmtlist(tr->child_head->next_sister);
+		right = tr_stmtlist(stmtlist->child_head->next_sister);
 	} 
 	return T_Seq(tr_stmt(stmtlist->child_head), right);
 }
-T_exp tr_exp(NODE* exp){
+static T_exp tr_exp(NODE* exp){
 	NODE* child_head = exp->child_head ;
 	NODE* second ;
 	NODE* third ;
@@ -140,6 +149,10 @@ T_exp tr_exp(NODE* exp){
 			second->name == terminal_name[AND - WHILE]||
 			second->name == terminal_name[OR - WHILE]||){
 			return tr_condexp(exp) ;
+		}else if(second->name == terminal_name[LB - WHILE]){
+			return T_Mem(tr_arrayexp(child_head));
+		}else if(second->name == terminal_name[DOT - WHILE]){
+			return T_Mem(tr_struct(child_head, third)) ;
 		}
 		
 		
@@ -148,7 +161,62 @@ T_exp tr_exp(NODE* exp){
 	
 	}
 }
-T_stm tr_cond(NODE* cond, Temp_label t, Temp_label f){
+static T_exp tr_array(NODE* exp){
+	Type* arraytype = ((IDTEM*)exp->parent->attr)->u.t ;
+	if(exp->name == nonterminal_name[Exp]){
+		NODE* third_next = exp->next_sister->next_sister ;//exp
+		T_exp plused = T_Binop(T_star, tr_exp(third_next), size_array(arraytype)) ;
+		if(exp->next_sister == terminal_name[LB - WHILE]){
+			return T_Binop(T_plus, tr_arrayexp(exp->child_head), plused);
+		}else if(exp->next_sister == terminal_name[DOT - WHILE]){
+			return tr_struct(child_head, third_next) ;
+		}
+	}else if(exp->name == terminal_name[ID - WHILE]){
+		IDTEM* arrayidtem = exp->value.type_p ;
+		Type* arraytype = arrayidtem->u.t  ;
+		Temp_temp arraytemp = tr_id(exp);
+		T_exp arraytempexp = T_Tem(arraytemp) ;
+		return T_Eseq(T_Dec(arraytempexp, T_Const(size_array(arraytype))),T_Addr(arraytempexp)) ;
+	}
+}
+static T_exp tr_struct(NODE* structexp, NODE* fieldid) {
+	Type* structtype = ((IDTEM*)structexp->attr)->u.t ;
+	int offset = field_offset(structtype->u.structure.field, fieldid) ;
+	int width = field_offset(structtype->u.structure.field, NULL) ;
+	T_exp structtempexp = tr_exp(structexp) ;
+	return T_Eseq(T_Dec(structtempexp, T_Const(width)), T_Binop(T_plus, T_Addr(structtempexp), offset)) ;
+}
+static int field_offset(FieldList* field, NODE* fieldid){
+	if(fieldid == NULL ){
+		if(field == NULL) {
+			return 0;
+		}else {
+			return size_field(field->type) + field_offset(field->tail, fieldid);
+		}
+	}else {
+		if( strcmp(field->name, ((IDTEM*)fieldid->value.type_p)->name)){
+			return 0 ;
+		}else {
+			return size_field(field->type) + field_offset(field->tail, fieldid);
+		}
+	}	
+}
+static int size_field(Type* fieldtype){
+	if(fieldtype->kind == BASIC_TYPE){
+		return 4 ;
+	}else if(fieldtype->kind == ARRAY_TYPE){
+		return size_array(fieldtype) ;
+	}
+}
+static int size_array(Type* arraytype){
+	Type* childtype = arraytype->u.array.elem ;
+	if(arraytype->kind == ARRAY_TYPE){
+		return arraytype->u.array.size * size_array(childtype);
+	}else if(arraytype->kind == BASIC_TYPE){
+		return 4 ;
+	}
+}
+static T_stm tr_cond(NODE* cond, Temp_label t, Temp_label f){
 	NODE* child_head = cond->child_head ;
 	NODE* second ;
 	NODE* third ;

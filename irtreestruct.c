@@ -69,7 +69,7 @@ T_stm T_Jump(T_exp exp, Temp_labelList labels);
 T_stm T_Cjump(T_relOp op, T_exp left, T_exp right, Temp_label tlable, Temp_label flable);
 T_stm T_Move(T_exp, T_exp);
 T_stm T_Exp(T_exp) ;
-T_stm T_Ret(Temp_temp);
+T_stm T_Ret(T_exp);
 
 T_exp T_Binop (T_binOp, T_exp, T_exp) ;
 T_exp T_Mem(T_exp);
