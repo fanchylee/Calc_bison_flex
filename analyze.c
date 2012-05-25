@@ -34,6 +34,7 @@ static int pass_attr_for_declist(NODE * declist);
 
 int analyze(NODE* head){
 	const char * ctemp ;
+	int depth ;
 	if((ctemp = head->name) == terminal_name[ID-WHILE]){
 #ifndef SUBMIT
 		printf("%s: %s\n",head->name , ((IDTEM*)(head->value).type_p)->name);
@@ -155,9 +156,25 @@ static int analyze_vardec(NODE* head){
 	int kind ;
 	if((temp = head->parent)->name == nonterminal_name[VarDec]){
 		int size ;
+		NODE * tmp = temp;
 		size = head->next_sister->next_sister->value.type_int ;
 		head->attr = create_type_kind(ARRAY_TYPE,head->parent->attr,size);
-		kind = VARIABLE_KIND;
+		while((tmp=tmp->parent)->name == nonterminal_name[VarDec]){}
+		while((tmp=tmp->parent)->name == nonterminal_name[DecList]){}
+		while((tmp=tmp->parent)->name == nonterminal_name[DefList]){}
+		if(tmp->name == nonterminal_name[StructSpecifier]){
+			kind = STRUCTUREFIELD_KIND;
+			Type* structuretype = tmp->attr ;
+			if(head->child_head->name == terminal_name[ID - WHILE]){
+				NODE* tmp = head->child_head;
+				tmp->attr = structuretype ;//ID attr get structure type from StructSpecifier
+			}
+		}else if(tmp->name == nonterminal_name[CompSt]){
+			kind = VARIABLE_KIND;
+		}else {
+			perror("unknown error :impossible in analyze_vardec");
+			exit(EXIT_FAILURE);
+		}
 	}else if(temp->name == nonterminal_name[Dec]){
 		NODE * tmp = temp;
 		head->attr = head->parent->attr ;
@@ -278,6 +295,7 @@ static addvar(int kind,NODE* idnode){
 			}else if(head->next_sister->name == terminal_name[ASSIGNOP - WHILE]){
 				error("initialize a field of a struct",15,idnode->line);
 				break ;
+			}else if(head->next_sister->name == terminal_name[LB - WHILE]){
 			}else{
 				perror("unknown error: impossible nest_sister in addvar");
 				exit(EXIT_FAILURE);

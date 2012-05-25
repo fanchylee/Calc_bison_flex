@@ -64,6 +64,20 @@ else		{
 		}
 {id}		{
 			yylval = value_create_node(ptou(install_id(yytext)),yylineno,terminal_name[ID          -WHILE]) ;
+			if(strcmp(((IDTEM*)((NODE*)yylval)->value.type_p)->name, "read")){}
+			else{
+				((IDTEM*)((NODE*)yylval)->value.type_p)->kind = FUNCTION_KIND ;
+				((IDTEM*)((NODE*)yylval)->value.type_p)->u.funtype.ret = create_type_kind(BASIC_TYPE, int_type) ;
+				((IDTEM*)((NODE*)yylval)->value.type_p)->u.funtype.varhead = NULL ; 
+			}
+			if(strcmp(((IDTEM*)((NODE*)yylval)->value.type_p)->name, "write")){}
+			else{
+				((IDTEM*)((NODE*)yylval)->value.type_p)->kind = FUNCTION_KIND ;
+				((IDTEM*)((NODE*)yylval)->value.type_p)->u.funtype.ret = create_type_kind(BASIC_TYPE, int_type) ;
+				((IDTEM*)((NODE*)yylval)->value.type_p)->u.funtype.varhead = malloc(sizeof(FieldList));
+				memset(((IDTEM*)((NODE*)yylval)->value.type_p)->u.funtype.varhead, 0, sizeof(FieldList)) ;
+				((IDTEM*)((NODE*)yylval)->value.type_p)->u.funtype.varhead->type = create_type_kind(BASIC_TYPE, int_type) ;
+			}
 			return(ID          );
 		}
 {int}		{
@@ -157,7 +171,7 @@ else		{
 			return(MINUS       );
 		}
 "*"		{
-			yylval = value_create_node(itou(T_star),yylineno,terminal_name[STAR        -WHILE]);
+			yylval = value_create_node(itou(T_mul),yylineno,terminal_name[STAR        -WHILE]);
 			return(STAR        );
 		}
 "/"		{

@@ -13,6 +13,7 @@
 #include "analyze.h"
 #include "translate.h"
 
+
 extern int num_lines;
 extern int yylineno;
 extern int yylex(void);
@@ -163,6 +164,7 @@ Args:	  Exp COMMA Args	{$$=csp_node(nonterminal_name[Args],$1,$2,$3,NULL);		}
 %%
 
 
+
 int main (int ac,char *av[]){
 	NODE * head;
 	nul=fopen("/dev/null","w");
@@ -185,14 +187,15 @@ int main (int ac,char *av[]){
 		putc('\n',stderr);
 		return -1;
 	}
-	tab = (char *)malloc(1);
-	tab[0]='\0';
+	reset_tab();
+	T_stm irtreehead ;
 	if(noerror ){
 		traverse_node_tree((NODE*)head,analyze);
-		traverse_node_tree((NODE*)head,translate);
+		irtreehead = translate((NODE*)head);
 #ifndef SUBMIT
 		traverse_item_list(idtable_head);
 #endif
+		traverse_irtree_stm(irtreehead);
 	}
 
 	//free_list(idtable_head) ;
