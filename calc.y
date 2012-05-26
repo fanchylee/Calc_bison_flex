@@ -168,6 +168,11 @@ Args:	  Exp COMMA Args	{$$=csp_node(nonterminal_name[Args],$1,$2,$3,NULL);		}
 int main (int ac,char *av[]){
 	NODE * head;
 	nul=fopen("/dev/null","w");
+	if(irout = fopen(av[2],"w")){
+	}else {
+		perror("input file error");
+		exit(EXIT_FAILURE);
+	}
 	if(stdin=fopen(av[1],"r")){
 	}else{
 		perror("input file error");

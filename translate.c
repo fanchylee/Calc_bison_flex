@@ -7,11 +7,13 @@
 #include "struct.h"
 #include "type.h"
 #include "irtreestruct.h"
+#include "global.h"
 #define TEMPSIZE 15
 #define BINOPSIZE 45
-#define IROUT stdout
+#define IROUT irout
 
 
+static T_exp get_eseqexp(T_exp expeseq);
 static T_exp tr_exp(NODE* exp) ;
 static T_stm tr_stm(NODE* stmt) ;
 static T_stm tr_stmtlist(NODE* stmtlist);
@@ -42,6 +44,8 @@ static T_stm tr_def(NODE* def);
 static T_stm tr_dec(NODE* dec);
 static T_stm tr_declist(NODE* declist);
 static T_stm tr_arraydec(NODE* dec);
+static T_stm tr_dec_struct(NODE* dec);
+static T_stm tr_declist_struct(NODE* dec);
 
 T_stm translate(NODE* head);
 int traverse_irtree(T_stm node);
@@ -101,7 +105,7 @@ static char* get_binop(T_binOp op){
 int traverse_irtree_stm(T_stm node ){
 	T_exp exp1, exp2;
 	T_stm stm1, stm2;
-	char* c1 ;
+	char *c1, *c2 ;
 	if(node == NULL){
 		return 0;
 	}
@@ -134,7 +138,9 @@ int traverse_irtree_stm(T_stm node ){
 	case T_MOVE:
 	exp1 =traverse_irtree_exp(node->u.MOVE.destination);
 	exp2 =traverse_irtree_exp(node->u.MOVE.source );
-	fprintf(IROUT, "%s := %s\n", get_location(exp1), get_location(exp2));
+	c1 = get_location(exp1) ;
+	c2 = get_location(exp2) ;
+	fprintf(IROUT, "%s := %s\n", c1, c2);
 	break ;
 
 	case T_EXP:
@@ -157,8 +163,18 @@ int traverse_irtree_stm(T_stm node ){
 	case T_DEC:
 	exp1 = traverse_irtree_exp(node->u.DEC.name);
 	exp2 = traverse_irtree_exp(node->u.DEC.width);
-	fprintf(IROUT, "DEC %s %s\n", get_location(exp1), get_location(exp2));
+	fprintf(IROUT, "DEC %s %s\n", get_location(exp1), get_location(exp2) + 1);
 	break ;
+
+	case T_READ:
+	exp1 = traverse_irtree_exp(node->u.READ.readto);
+	fprintf(IROUT, "READ %s\n", get_location(exp1));
+	break;
+	
+	case T_WRITE:
+	exp1 = traverse_irtree_exp(node->u.WRITE.writefrom);
+	fprintf(IROUT, "WRITE %s\n", get_location(exp1));
+	break;
 	}
 	return 0 ;
 }
@@ -182,8 +198,15 @@ T_exp traverse_irtree_exp(T_exp node){
 	T_exp temexp1, temexp2, temexp3;
 	switch(node->kind){
 	case T_BINOP:
-	temexp1 = traverse_irtree_exp(node->u.BINOP.left);
-	temexp2 = traverse_irtree_exp(node->u.BINOP.right);
+/*
+	temexp1 = node->u.BINOP.left;
+	temexp2 = node->u.BINOP.right;
+	if(temexp1->kind == T_ESEQ){
+		temexp1 = get_eseqexp(temexp1);
+	}
+	if(temexp2->kind == T_ESEQ){
+		temexp2 = get_eseqexp(temexp2);
+	}
 	if(node->u.BINOP.left->kind == node->u.BINOP.right->kind && 
 	node->u.BINOP.left->kind == T_CONST){
 		node->u.BINOP.left = temexp1 ;	
@@ -193,12 +216,15 @@ T_exp traverse_irtree_exp(T_exp node){
 		return  node;
 	}
 	break ;
+*/
 
 	case T_MEM:
-	return node;
-	break ;
-
 	case T_TEMP:
+	case T_NAME:
+	case T_FUNNAME:
+	case T_CONST:
+	case T_CALL:
+	case T_ADDR:	
 	return node ;
 	break ;
 
@@ -207,46 +233,76 @@ T_exp traverse_irtree_exp(T_exp node){
 	return traverse_irtree_exp(node->u.ESEQ.eseqexp);
 	break ;
 
-	case T_NAME:
-	return node ;
-	break ;
-
-	case T_FUNNAME:
-	return node ;
-	break ;
-
-	case T_CONST:
-	return node ;
-	break ;
-
-	case T_CALL:
-	return node ;
-	break ;
-
-	case T_ADDR:	
-	return traverse_irtree_exp(node->u.ADDR.nameexp);
-	break ;
 	}
 }
 static void traverse_explist(T_expList args){
+	T_exp head, exp1, exp2, exp3;
 	if(args == NULL){
 		return ;
 	}
 	traverse_explist(args->tail);
-	T_exp head = traverse_irtree_exp(args->head);
+//	T_exp head = traverse_irtree_exp(args->head);
+	head = args->head ;
+
+	if((exp1 = head)->kind == T_ESEQ){
+		exp1 = get_eseqexp(exp1);
+	}
+
+	switch(exp1->kind){
+	Temp_temp t ;
+
+	case T_BINOP:
+	t = create_temp();
+	fprintf(IROUT, "%s := %s\n", t, get_location(head));
+	fprintf(IROUT, "ARG %s\n", t);
+	break ;
+
+	case T_ESEQ: 
+	break;
+
+	case T_CALL: case T_MEM: case T_ADDR: case T_NAME: case T_FUNNAME: case T_CONST: case T_TEMP:
 	fprintf(IROUT, "ARG %s\n", get_location(head));
+	break;
+
+	default:
+	break;
+	}
 }
 static void traverse_explist_f(T_expList args){
+	T_exp head, exp1  ;
 	if(args == NULL){
 		return ;
 	}
-	T_exp head = traverse_irtree_exp(args->head);
+//	T_exp head = traverse_irtree_exp(args->head);
+	head = args->head ;
+	if((exp1 = head)->kind == T_ESEQ){
+		exp1 = get_eseqexp(exp1);
+	}
+
+	switch(head->kind){
+	Temp_temp t ;
+
+	case T_BINOP:
+	t = create_temp();
+	fprintf(IROUT, "%s := %s\n", t, get_location(head));
+	fprintf(IROUT, "PARAM %s\n", t);
+	break ;
+
+	case T_ESEQ: 
+	break;
+	case T_CALL: case T_MEM: case T_ADDR: case T_NAME: case T_FUNNAME: case T_CONST: case T_TEMP:
 	fprintf(IROUT, "PARAM %s\n", get_location(head));
+	break;
+
+	default:
+	break;
+	}
 	traverse_explist(args->tail);
 }
 static char* get_location(T_exp locationexp){
 	char* ret ;
-	T_exp exp1 ;
+	T_exp exp1, exp2, exp3 ;
+	Temp_temp t1, t2 ;
 	switch(locationexp->kind){
 	case T_NAME:
 	case T_FUNNAME:
@@ -260,11 +316,13 @@ static char* get_location(T_exp locationexp){
 	break ;
 
 	case T_MEM:
-	exp1 = traverse_irtree_exp(locationexp->u.MEM.memexp);
+	//exp1 = traverse_irtree_exp(locationexp->u.MEM.memexp);
+	exp1 = locationexp->u.MEM.memexp ;
 	ret = malloc(TEMPSIZE);
 	if(exp1->kind == T_BINOP){
+		char *ct = get_location(exp1);
 		Temp_temp t = create_temp();
-		fprintf(IROUT, "%s := %s\n", t, get_location(exp1->u.BINOP.right));
+		fprintf(IROUT, "%s := %s\n", t, ct);
 		sprintf(ret, "*%s", t);
 	}else {
 		sprintf(ret, "*%s", get_location(exp1));
@@ -272,26 +330,39 @@ static char* get_location(T_exp locationexp){
 	break ;
 
 	case T_ADDR:
-	exp1 = traverse_irtree_exp(locationexp->u.ADDR.nameexp);
+//	exp1 = traverse_irtree_exp(locationexp->u.ADDR.nameexp);
+	exp1 = locationexp->u.ADDR.nameexp ;
 	ret = malloc(TEMPSIZE);
-	sprintf(ret, "&%s", get_location(exp1));
+	if(exp1->kind == T_BINOP){
+		char *ct = get_location(exp1);
+		Temp_temp t = create_temp();
+		fprintf(IROUT, "%s := %s\n", t, ct);
+		sprintf(ret, "&%s", t);
+	}else{
+		sprintf(ret, "&%s", get_location(exp1));
+	}
 	break ;
 	
 	case T_ESEQ:
-	exp1 = traverse_irtree_exp(locationexp);
-	get_location(exp1);
+//	exp1 = traverse_irtree_exp(locationexp->u.ESEQ.eseqexp);
+	traverse_irtree_stm(locationexp->u.ESEQ.eseqstm);
+	exp1 = locationexp->u.ESEQ.eseqexp ;
+	ret = get_location(exp1);
 	break ;
 	
 	case T_BINOP:
-	exp1 = traverse_irtree_exp(locationexp);
+//	exp1 = traverse_irtree_exp(locationexp);
+	exp1 = locationexp ;
 	ret = malloc(BINOPSIZE);
 	if(exp1->kind != T_BINOP){
-		get_location(exp1);
+		ret = get_location(exp1);
 	}else{
 		char * opc = get_binop(exp1->u.BINOP.op);
+		char * leftc =  get_location(exp1->u.BINOP.left );
+		char * rightc = get_location(exp1->u.BINOP.right);
+		Temp_temp t1, t2 ;
+/*
 		if(exp1->u.BINOP.left->kind != T_BINOP && exp1->u.BINOP.right->kind != T_BINOP){
-			char * leftc =  get_location(exp1->u.BINOP.left );
-			char * rightc = get_location(exp1->u.BINOP.right);
 			sprintf(ret, "%s %s %s", leftc, opc, rightc);
 		}else if(exp1->u.BINOP.left->kind == T_BINOP && exp1->u.BINOP.right->kind != T_BINOP){
 			Temp_temp t = create_temp();
@@ -302,18 +373,59 @@ static char* get_location(T_exp locationexp){
 			fprintf(IROUT, "%s := %s\n", t, get_location(exp1->u.BINOP.right));
 			sprintf(ret, "%s %s %s",  get_location(exp1->u.BINOP.left), opc, t);
 		}else if(exp1->u.BINOP.left->kind == T_BINOP && exp1->u.BINOP.right->kind == T_BINOP){
-			Temp_temp t1 = create_temp();
-			Temp_temp t2 = create_temp();
-			fprintf(IROUT, "%s := %s\n", t1, get_location(exp1->u.BINOP.left));
-			fprintf(IROUT, "%s := %s\n", t2, get_location(exp1->u.BINOP.right));
-			sprintf(ret, "%s %s %s",  t1, opc, t2);
+	
+*/		
+		if((exp2 = exp1->u.BINOP.left)->kind == T_ESEQ){
+			exp2 = get_eseqexp(exp2);
 		}
+		if((exp3 = exp1->u.BINOP.right)->kind == T_ESEQ){
+			exp3 = get_eseqexp(exp3);
+		}
+		switch(exp2->kind){
+			case T_BINOP:
+			t1 = create_temp();
+			fprintf(IROUT, "%s := %s\n", t1, leftc);
+			break ;
+
+			case T_ESEQ: 
+			break;
+
+			case T_CALL: case T_MEM: case T_ADDR: case T_NAME: case T_FUNNAME: case T_CONST: case T_TEMP:
+			t1 = leftc;
+			break;
+
+			default:
+			t1 = create_temp();
+			fprintf(IROUT, "%s := %s\n", t1, leftc);
+			break;
+		}
+		switch(exp3->kind){
+			case T_BINOP:
+			t2 = create_temp();
+			fprintf(IROUT, "%s := %s\n", t2, rightc);
+			break ;
+
+			case T_ESEQ: 
+			break;
+
+			case T_CALL: case T_MEM: case T_ADDR: case T_NAME: case T_FUNNAME: case T_CONST: case T_TEMP:
+			t2 = rightc;
+			break;
+
+			default:
+			t2 = create_temp();
+			fprintf(IROUT, "%s := %s\n", t2, rightc);
+			break;
+		}
+		sprintf(ret, "%s %s %s",  t1, opc, t2);
 	}
 	break;
 	
 	case T_CALL:
 	traverse_explist(locationexp->u.CALL.args);
-	sprintf(ret, "CALL %s", get_location(traverse_irtree_exp(locationexp->u.CALL.callexp)));
+	t1 = create_temp();
+	fprintf(IROUT, "%s := CALL %s\n", t1, get_location(locationexp->u.CALL.callexp));
+	ret = t1;
 	break ;
 
 	default:
@@ -322,6 +434,14 @@ static char* get_location(T_exp locationexp){
 	break;
 	}
 	return ret ;
+}
+static T_exp get_eseqexp(T_exp expeseq){
+	T_exp childexp = expeseq->u.ESEQ.eseqexp ;
+	if(childexp->kind == T_ESEQ){
+		return get_eseqexp(childexp);
+	}else{
+		return childexp ;
+	}
 }
 ///////////////////
 T_stm translate(NODE* head){
@@ -462,7 +582,49 @@ static T_stm tr_deflist(NODE* deflist){
 	}
 }
 static T_stm tr_def(NODE* def){
+	NODE* specifier = def->child_head ;
+	NODE* structspecifier = specifier->child_head ;
+	if(structspecifier->name == nonterminal_name[StructSpecifier]){
+		return tr_declist_struct(def->child_head->next_sister);
+	}
 	return tr_declist(def->child_head->next_sister);
+}
+static T_stm tr_declist_struct(NODE* declist){
+	NODE* dec = declist->child_head ;
+	NODE* comma = dec->next_sister;
+	T_stm left = tr_dec_struct(dec);
+	T_stm right ;
+	if(comma == NULL){
+		right = NULL ;
+	}else {
+		right = tr_declist_struct(comma->next_sister);
+	}
+	if(left != NULL && right == NULL){
+		return left ;
+	}else if(left != NULL&& right != NULL){
+		return T_Seq(left, right);
+	}else if(left == NULL && right != NULL){
+		return right ;
+	}else if(left == NULL && right == NULL){
+		return NULL ;
+	}
+}
+static T_stm tr_dec_struct(NODE* dec){
+	NODE* vardec = dec->child_head;
+	NODE* id;
+	NODE* exp ;
+	NODE* assignop;
+	if(vardec->next_sister == NULL){
+		id = vardec->child_head ;
+		if(id->name != terminal_name[ID - WHILE]){
+			return tr_arraydec(id) ;
+		}else {
+			Temp_temp t = tr_id(id) ;
+			FieldList* fieldhead = ((IDTEM*)id->value.type_p)->u.structuretype.t->u.structure.field ;
+			int width = field_offset(fieldhead, NULL);
+			return T_Dec(T_Temp(t), T_Const(width)); 
+		}
+	}
 }
 static T_stm tr_declist(NODE* declist){
 		NODE* dec = declist->child_head ;
@@ -542,12 +704,21 @@ static T_exp tr_exp(NODE* exp){
 			return T_Temp(tr_id(child_head)) ;
 		}else if(second->name == terminal_name[LP - WHILE]){
 			third = second->next_sister ;
+			char *fname = ((IDTEM*)child_head->value.type_p)->name ;
+			if(strcmp(fname, "read") == 0 ){
+				Temp_temp t = create_temp();
+				return T_Eseq(T_Read(T_Temp(t)), T_Temp(t));
+			}
+			if( strcmp(fname, "write") == 0 ){
+				return T_Eseq(T_Write(tr_exp(third->child_head)), T_Const(0)) ;
+			}
 			if(third->name == nonterminal_name[Args]){
 				/*TODO*/
-				return T_Call(T_FunName(((IDTEM*)child_head->value.type_p)->name), tr_args(third));
+				
+				return T_Call(T_FunName(fname), tr_args(third));
 			}else if(third->name == terminal_name[RP - WHILE]){
 				/*TODO*/
-				return T_Call(T_FunName(((IDTEM*)child_head->value.type_p)->name), NULL) ;
+				return T_Call(T_FunName(fname), NULL) ;
 			}
 		}
 	}else if(child_head->name == terminal_name[INT - WHILE]){
@@ -557,7 +728,7 @@ static T_exp tr_exp(NODE* exp){
 	}else if(child_head->name == terminal_name[NOT - WHILE]){
 		return tr_condexp(exp) ;
 	}else if(child_head->name == terminal_name[MINUS - WHILE]){
-		T_exp T_expexp = tr_exp(exp);
+		T_exp T_expexp = tr_exp(exp->child_head->next_sister);
 		T_exp bopminus = T_Binop(T_minus, T_Const(0), T_expexp);
 		return bopminus ;
 	}else if(child_head->name == nonterminal_name[Exp]){
@@ -566,7 +737,9 @@ static T_exp tr_exp(NODE* exp){
 		third = second->next_sister ;
 		if(second->name == terminal_name[ASSIGNOP - WHILE]){
 			T_exp exp2 = tr_exp(third) ;
-			return T_Eseq(T_Move(tr_exp(child_head), exp2), exp2) ;
+			Temp_temp t = create_temp() ;
+			T_exp te = T_Temp(t);
+			return T_Eseq(T_Seq(T_Move(te, exp2), T_Move(tr_exp(child_head), te)), te) ;
 		}else if(second->name == terminal_name[PLUS - WHILE]||
 			second->name == terminal_name[MINUS - WHILE]||
 			second->name == terminal_name[STAR - WHILE]||
@@ -613,7 +786,8 @@ static T_exp tr_struct(NODE* structexp, NODE* fieldid) {
 	int offset = field_offset(structtype->u.structure.field, fieldid) ;
 	int width = field_offset(structtype->u.structure.field, NULL) ;
 	T_exp structtempexp = tr_exp(structexp) ;
-	return T_Eseq(T_Dec(structtempexp, T_Const(width)), T_Binop(T_plus, T_Addr(structtempexp), T_Const(offset))) ;
+//	return T_Eseq(T_Dec(structtempexp, T_Const(width)), T_Binop(T_plus, T_Addr(structtempexp), T_Const(offset))) ;
+	return T_Binop(T_plus, T_Addr(structtempexp), T_Const(offset));
 }
 static int field_offset(FieldList* field, NODE* fieldid){
 	if(fieldid == NULL ){
@@ -623,7 +797,7 @@ static int field_offset(FieldList* field, NODE* fieldid){
 			return size_field(field->type) + field_offset(field->tail, fieldid);
 		}
 	}else {
-		if( strcmp(field->name, ((IDTEM*)fieldid->value.type_p)->name)){
+		if( strcmp(field->name, ((IDTEM*)fieldid->value.type_p)->name) == 0){
 			return 0 ;
 		}else {
 			return size_field(field->type) + field_offset(field->tail, fieldid);
@@ -635,6 +809,8 @@ static int size_field(Type* fieldtype){
 		return 4 ;
 	}else if(fieldtype->kind == ARRAY_TYPE){
 		return size_array(fieldtype) ;
+	}else if(fieldtype->kind == STRUCTURE_TYPE){
+		return field_offset(fieldtype->u.structure.field, NULL) ;
 	}
 }
 static int size_array(Type* arraytype){
@@ -643,6 +819,8 @@ static int size_array(Type* arraytype){
 		return arraytype->u.array.size * size_array(childtype);
 	}else if(arraytype->kind == BASIC_TYPE){
 		return 4 ;
+	}else if(arraytype->kind == STRUCTURE_TYPE){
+		return field_offset(arraytype->u.structure.field, NULL) ;
 	}
 }
 static T_stm tr_cond(NODE* cond, Temp_label t, Temp_label f){
@@ -689,7 +867,7 @@ static T_relOp tr_relop(NODE* relop){
 }
 static Temp_temp tr_id(NODE* id){
 	Temp_temp tempid = malloc(TEMPSIZE);
-	sprintf(tempid, "t%x\0", (long int)((IDTEM*)id->value.type_p)->cur);
+	sprintf(tempid, "t%x\0", (long int)((IDTEM*)id->value.type_p));
 	return tempid ;
 }
 static T_expList tr_args(NODE* args){

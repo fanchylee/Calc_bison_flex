@@ -6,6 +6,7 @@ IDTEM * idtable_head ;
 NODE * node_head ;
 FILE * fpdebug ;
 FILE * nul=NULL;
+FILE * irout = NULL ;
 char * tab=NULL ;
 char noerror = 1 ;
 

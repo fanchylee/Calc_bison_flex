@@ -10,6 +10,7 @@ extern IDTEM* idtable_head   ;
 extern  NODE* node_head ;
 extern FILE *fpdebug ;
 extern FILE *nul ;
+extern FILE *irout ;
 extern char *tab ;
 extern char noerror  ;
 extern void reset_tab();

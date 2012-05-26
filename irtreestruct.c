@@ -29,7 +29,7 @@ typedef struct T_exp_ *T_exp;
 typedef struct T_stmList_ *T_stmList;
 typedef struct T_expList_ *T_expList;
 struct T_stm_ {
-	enum {T_FUN=100, T_SEQ, T_LABEL, T_JUMP, T_CJUMP, T_MOVE, T_EXP, T_RET, T_DEC} kind;
+	enum {T_FUN=100, T_SEQ, T_LABEL, T_JUMP, T_CJUMP, T_MOVE, T_EXP, T_RET, T_DEC, T_READ, T_WRITE} kind;
 	union {
 		struct {Temp_fun fun; T_expList args;} FUN;
 		struct {T_stm left, right;} SEQ;
@@ -40,6 +40,8 @@ struct T_stm_ {
 		struct {T_exp exp;} EXP;
 		struct {T_exp retexp;} RET;
 		struct {T_exp name, width;} DEC;
+		struct {T_exp readto;} READ ;
+		struct {T_exp writefrom;} WRITE ;
 	} u;
 };
 struct T_exp_ {
@@ -74,6 +76,8 @@ T_stm T_Move(T_exp, T_exp);
 T_stm T_Exp(T_exp) ;
 T_stm T_Ret(T_exp);
 T_stm T_Dec(T_exp, T_exp) ;
+T_stm T_Read(T_exp);
+T_stm T_Write(T_exp);
 
 T_exp T_Binop (T_binOp, T_exp, T_exp) ;
 T_exp T_Mem(T_exp);
@@ -213,6 +217,19 @@ T_stm T_Dec(T_exp name,T_exp width){
 	stm->u.DEC.width = width ;
 	return stm ;
 }
+T_stm T_Read(T_exp exp){
+	T_stm stm = create_stm() ;
+	stm->kind = T_READ ;
+	stm->u.READ.readto = exp ;
+	return stm ;
+}
+T_stm T_Write(T_exp exp){
+	T_stm stm = create_stm() ;
+	stm->kind = T_WRITE ;
+	stm->u.WRITE.writefrom = exp ;
+	return stm ;
+}
+
 
 T_exp T_Binop (T_binOp op , T_exp left, T_exp right) {
 	T_exp exp = create_exp();

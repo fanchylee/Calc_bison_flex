@@ -264,7 +264,7 @@ static void disallowoverlap(IDTEM * head){
 		head->overlap -= 1;
 	}
 }
-static addvar(int kind,NODE* idnode){
+static int addvar(int kind,NODE* idnode){
 	IDTEM* tid = ((IDTEM*)idnode->value.type_p)->cur ;
 	NODE* head = idnode->parent ;//VarDec
 	switch(tid->overlap){
@@ -343,6 +343,8 @@ static addvar(int kind,NODE* idnode){
 		exit(EXIT_FAILURE);
 		break;
 	}
+	idnode->value.type_p = tid ;
+	
 }
 static void setcur(IDTEM * cur){
 	IDTEM * ttid = cur ;
@@ -555,6 +557,7 @@ static Type* analyze_exp(NODE* exp){
 			NODE* ntemp = temp->next_sister ;
 			IDTEM* tid = temp->value.type_p ;
 			tid = tid->cur;
+			temp->value.type_p = tid ;
 			temp->parent->attr = tid->u.t;//Exp get attr from ID
 			temp->value.type_p = tid ;
 			if(ntemp == NULL){
@@ -587,16 +590,16 @@ static Type* analyze_exp(NODE* exp){
 		}else if(temp->name == terminal_name[INT - WHILE]){
 			(temp->parent->attr = create_type_kind(BASIC_TYPE,int_type)) ;//Exp get attr from INT
 		}else if(temp->name == terminal_name[MINUS - WHILE]){//int or float
-			Type * ttype = temp->parent->attr = temp->next_sister->attr ;//Exp get attr from  Exp after MINUS
+			Type * ttype = temp->parent->attr = analyze_exp(temp->next_sister) ;//Exp get attr from  Exp after MINUS
 			if(ttype->kind == BASIC_TYPE){
 			}else {
 				error("illegal arithmetic operation",7,temp->line);
 			}
 			(temp->parent->attr = ttype) ;
 		}else if(temp->name == terminal_name[LP - WHILE]){
-			(temp->parent->attr = temp->next_sister->attr) ;//Exp get attr from Exp after LP
+			(temp->parent->attr = analyze_exp(temp->next_sister)) ;//Exp get attr from Exp after LP
 		}else if(temp->name == terminal_name[NOT - WHILE]){// only int 
-			Type * ttype = temp->parent->attr = temp->next_sister->attr ;//Exp get attr from  Exp after MINUS
+			Type * ttype = temp->parent->attr = analyze_exp(temp->next_sister) ;//Exp get attr from  Exp after MINUS
 			if(ttype->kind == BASIC_TYPE && ttype->u.basic == int_type){
 			}else {
 				error("illegal NOT logic operation",7,temp->line);
