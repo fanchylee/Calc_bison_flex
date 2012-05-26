@@ -787,6 +787,12 @@ static T_exp tr_struct(NODE* structexp, NODE* fieldid) {
 	int width = field_offset(structtype->u.structure.field, NULL) ;
 	T_exp structtempexp = tr_exp(structexp) ;
 //	return T_Eseq(T_Dec(structtempexp, T_Const(width)), T_Binop(T_plus, T_Addr(structtempexp), T_Const(offset))) ;
+	if(structexp->child_head->next_sister != NULL&&structexp->child_head->next_sister->name == terminal_name[DOT - WHILE]){
+		return T_Binop(T_plus, tr_struct(structexp->child_head, structexp->child_head->next_sister->next_sister ), T_Const(offset));
+	}
+	if(structexp->child_head->next_sister != NULL&&structexp->child_head->next_sister->name == terminal_name[LB - WHILE]){
+		return T_Binop(T_plus, tr_array(structexp->child_head), T_Const(offset)) ;
+	}
 	return T_Binop(T_plus, T_Addr(structtempexp), T_Const(offset));
 }
 static int field_offset(FieldList* field, NODE* fieldid){
