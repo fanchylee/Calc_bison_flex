@@ -297,7 +297,7 @@ static void traverse_explist_f(T_expList args){
 	default:
 	break;
 	}
-	traverse_explist(args->tail);
+	traverse_explist_f(args->tail);
 }
 static char* get_location(T_exp locationexp){
 	char* ret ;
@@ -354,9 +354,7 @@ static char* get_location(T_exp locationexp){
 //	exp1 = traverse_irtree_exp(locationexp);
 	exp1 = locationexp ;
 	ret = malloc(BINOPSIZE);
-	if(exp1->kind != T_BINOP){
-		ret = get_location(exp1);
-	}else{
+	{
 		char * opc = get_binop(exp1->u.BINOP.op);
 		char * leftc =  get_location(exp1->u.BINOP.left );
 		char * rightc = get_location(exp1->u.BINOP.right);
@@ -381,8 +379,16 @@ static char* get_location(T_exp locationexp){
 		if((exp3 = exp1->u.BINOP.right)->kind == T_ESEQ){
 			exp3 = get_eseqexp(exp3);
 		}
+		if(exp2->kind == T_CONST && exp3->kind == T_CONST){
+			ret = get_location(T_Const(operation(exp1->u.BINOP.op, exp2->u.CONST.cnt, exp3->u.CONST.cnt)));
+			break ;
+		}
 		switch(exp2->kind){
 			case T_BINOP:
+			if(*leftc == '#'){
+				t1 = leftc;
+				break ;
+			}
 			t1 = create_temp();
 			fprintf(IROUT, "%s := %s\n", t1, leftc);
 			break ;
@@ -395,12 +401,14 @@ static char* get_location(T_exp locationexp){
 			break;
 
 			default:
-			t1 = create_temp();
-			fprintf(IROUT, "%s := %s\n", t1, leftc);
 			break;
 		}
 		switch(exp3->kind){
 			case T_BINOP:
+			if(*rightc == '#'){
+				t2 = rightc;
+				break ;
+			}
 			t2 = create_temp();
 			fprintf(IROUT, "%s := %s\n", t2, rightc);
 			break ;
@@ -413,8 +421,6 @@ static char* get_location(T_exp locationexp){
 			break;
 
 			default:
-			t2 = create_temp();
-			fprintf(IROUT, "%s := %s\n", t2, rightc);
 			break;
 		}
 		sprintf(ret, "%s %s %s",  t1, opc, t2);
