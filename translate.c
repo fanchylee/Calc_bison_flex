@@ -318,14 +318,22 @@ static char* get_location(T_exp locationexp){
 	case T_MEM:
 	//exp1 = traverse_irtree_exp(locationexp->u.MEM.memexp);
 	exp1 = locationexp->u.MEM.memexp ;
+	if(exp1 ->kind == T_ESEQ){
+		exp1 = get_eseqexp(exp1);
+	}
 	ret = malloc(TEMPSIZE);
-	if(exp1->kind == T_BINOP){
+	{
 		char *ct = get_location(exp1);
-		Temp_temp t = create_temp();
-		fprintf(IROUT, "%s := %s\n", t, ct);
-		sprintf(ret, "*%s", t);
-	}else {
-		sprintf(ret, "*%s", get_location(exp1));
+		if(exp1 ->kind == T_ESEQ){
+			exp1 = get_eseqexp(exp1);
+		}	
+		if(exp1->kind == T_BINOP){
+			Temp_temp t = create_temp();
+			fprintf(IROUT, "%s := %s\n", t, ct);
+			sprintf(ret, "*%s", t);
+		}else {
+			sprintf(ret, "*%s", get_location(exp1));
+		}
 	}
 	break ;
 
@@ -333,13 +341,18 @@ static char* get_location(T_exp locationexp){
 //	exp1 = traverse_irtree_exp(locationexp->u.ADDR.nameexp);
 	exp1 = locationexp->u.ADDR.nameexp ;
 	ret = malloc(TEMPSIZE);
-	if(exp1->kind == T_BINOP){
+	{
 		char *ct = get_location(exp1);
-		Temp_temp t = create_temp();
-		fprintf(IROUT, "%s := %s\n", t, ct);
-		sprintf(ret, "&%s", t);
-	}else{
-		sprintf(ret, "&%s", get_location(exp1));
+		if(exp1 ->kind == T_ESEQ){
+			exp1 = get_eseqexp(exp1);
+		}
+		if(exp1->kind == T_BINOP){
+			Temp_temp t = create_temp();
+			fprintf(IROUT, "%s := %s\n", t, ct);
+			sprintf(ret, "&%s", t);
+		}else{
+			sprintf(ret, "&%s", get_location(exp1));
+		}
 	}
 	break ;
 	
@@ -379,14 +392,52 @@ static char* get_location(T_exp locationexp){
 		if((exp3 = exp1->u.BINOP.right)->kind == T_ESEQ){
 			exp3 = get_eseqexp(exp3);
 		}
-		if(exp2->kind == T_CONST && exp3->kind == T_CONST){
-			ret = get_location(T_Const(operation(exp1->u.BINOP.op, exp2->u.CONST.cnt, exp3->u.CONST.cnt)));
-			break ;
+		if(exp2->kind == T_CONST ){
+			if( exp3->kind == T_CONST){
+				ret = get_location(T_Const(operation(exp1->u.BINOP.op, exp2->u.CONST.cnt, exp3->u.CONST.cnt)));
+				break ;
+			}
+			if(exp2->u.CONST.cnt == 1 && exp1->u.BINOP.op == T_mul){
+				ret = get_location(exp3);
+				break ;
+			}
+			if(exp2->u.CONST.cnt == 0){
+				if(exp1->u.BINOP.op == T_plus){
+					ret = get_location(exp3);
+					break ;
+				}
+				if(exp1->u.BINOP.op == T_mul){
+					ret = get_location(T_Const(0));
+					break ;
+				}
+			}
+		}else{
+			if(exp3->u.CONST.cnt == 1 && exp1->u.BINOP.op == T_mul){
+				ret = get_location(exp2);
+				break ;
+			}
+			if(exp3->u.CONST.cnt == 0){
+				if(exp1->u.BINOP.op == T_plus){
+					ret = get_location(exp2);
+					break ;
+				}
+				if(exp1->u.BINOP.op == T_mul){
+					ret = get_location(T_Const(0));
+					break ;
+				}
+			}
+
 		}
 		switch(exp2->kind){
 			case T_BINOP:
+/*
 			if(*leftc == '#'){
 				t1 = leftc;
+				break ;
+			}
+*/
+			if(strchr(leftc, ' ') == NULL){
+				t1 = leftc ;
 				break ;
 			}
 			t1 = create_temp();
@@ -405,9 +456,15 @@ static char* get_location(T_exp locationexp){
 		}
 		switch(exp3->kind){
 			case T_BINOP:
+/*
 			if(*rightc == '#'){
 				t2 = rightc;
 				break ;
+			}
+*/
+			if(strchr(rightc, ' ') == NULL){
+				t2 = rightc;
+				break;
 			}
 			t2 = create_temp();
 			fprintf(IROUT, "%s := %s\n", t2, rightc);
@@ -422,6 +479,36 @@ static char* get_location(T_exp locationexp){
 
 			default:
 			break;
+		}
+		if(*t1 == '#' && *t2 == '#'){
+			ret = get_location(T_Const(operation(exp1->u.BINOP.op, atoi(t1+1), atoi(t2+1))));
+			break ;
+		}
+		if(strcmp(t1, "#0")==0){
+			if(strcmp(opc, "+")==0){
+				ret = t2 ;
+				break ;
+			}
+			if(strcmp(opc, "*")==0){
+				ret = get_location(T_Const(0));
+				break ;
+			}
+		}else if(strcmp(t1, "#1")==0&& strcmp(opc, "*")==0){
+			ret = t2 ;
+			break ;
+		}
+		if(strcmp(t2, "#0")==0){
+			if(strcmp(opc, "+")==0){
+				ret = t1 ;
+				break ;
+			}
+			if(strcmp(opc, "*")==0){
+				ret = get_location(T_Const(0));
+				break ;
+			}
+		}else if(strcmp(t2, "#1")==0&& strcmp(opc, "*")==0){
+			ret = t1 ;
+			break ;
 		}
 		sprintf(ret, "%s %s %s",  t1, opc, t2);
 	}
