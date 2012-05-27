@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include "type.h"
 #include "struct.h"
-//#define SUBMIT
+#define SUBMIT
 
 extern IDTEM* idtable_head   ;
 extern  NODE* node_head ;
